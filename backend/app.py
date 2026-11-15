@@ -171,7 +171,7 @@ def serve_frontend(path):
     if path != "" and os.path.exists(os.path.join(root_dir, path)):
         return send_from_directory(root_dir, path)
     else:
-        return send_from_directory(root_dir, 'login.html')
+        return send_from_directory(root_dir, 'landing.html')
 
 if __name__ == '__main__':
     print("=" * 60)

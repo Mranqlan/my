@@ -811,73 +811,67 @@ function toggleCustomerCreditHold(id) {
 
 
 
+
 // ==========================================
-// مزامنة البيانات من الخادم الخلفي (تثبيت نهائي)
+// مزامنة البيانات الذكية (Lazy Loading) لتحسين الأداء
 // ==========================================
 window.initBackendSync = async function() {
     if (window.location.protocol === 'file:') return;
+    const path = window.location.pathname;
+    const headers = { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' };
+    
     try {
-        console.log('🔄 [Sync] جاري جلب البيانات من الخادم...');
+        console.log('🔄 [Sync] جاري جلب البيانات المطلوبة للصفحة...');
         
-        // 1. العملاء
-        const custRes = await fetch('/api/customers', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
-        if (custRes.ok) {
-            const customers = await custRes.json();
-            localStorage.setItem('onyx_customers', JSON.stringify(customers.map(c => ({
-                id: c.id, code: c.code, name: c.name, phone: c.phone, 
-                balance: c.balance, creditLimit: c.credit_limit, isOnHold: c.is_on_hold
-            }))));
-            console.log('✅ [Sync] العملاء: ' + customers.length);
+        // 1. الصفحات التي تحتاج العملاء (الفواتير، التقارير، العملاء)
+        if (path.includes('customer') || path.includes('sales') || path.includes('invoice') || path.includes('reports') || path.includes('index')) {
+            const custRes = await fetch('/api/customers', { headers });
+            if (custRes.ok) {
+                const data = await custRes.json();
+                localStorage.setItem('onyx_customers', JSON.stringify(data.map(c => ({ id: c.id, code: c.code, name: c.name, phone: c.phone, balance: c.balance, creditLimit: c.credit_limit, isOnHold: c.is_on_hold }))));
+            }
         }
 
-        // 2. الموردين
-        const supRes = await fetch('/api/suppliers', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
-        if (supRes.ok) {
-            const suppliers = await supRes.json();
-            localStorage.setItem('onyx_suppliers', JSON.stringify(suppliers.map(s => ({
-                id: s.id, code: s.code, name: s.name, phone: s.phone, balance: s.balance
-            }))));
-            console.log('✅ [Sync] الموردين: ' + suppliers.length);
+        // 2. الصفحات التي تحتاج الموردين (المشتريات، الموردين)
+        if (path.includes('supplier') || path.includes('purchase')) {
+            const supRes = await fetch('/api/suppliers', { headers });
+            if (supRes.ok) {
+                const data = await supRes.json();
+                localStorage.setItem('onyx_suppliers', JSON.stringify(data));
+            }
         }
 
-        // 3. الأصناف
-        const itemsRes = await fetch('/api/items', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
-        if (itemsRes.ok) {
-            const items = await itemsRes.json();
-            localStorage.setItem('onyx_items', JSON.stringify(items.map(i => ({
-                id: i.id, code: i.code, name: i.name, barcode: i.barcode,
-                purchasePrice: i.purchase_price, salePrice: i.sale_price,
-                qty: i.qty, warehouseName: i.warehouse_name, warehouseId: 1 
-            }))));
-            console.log('✅ [Sync] الأصناف: ' + items.length);
+        // 3. الصفحات التي تحتاج الأصناف (المخزون، الفواتير)
+        if (path.includes('inventory') || path.includes('sales') || path.includes('purchase')) {
+            const itemsRes = await fetch('/api/items', { headers });
+            if (itemsRes.ok) {
+                const data = await itemsRes.json();
+                localStorage.setItem('onyx_items', JSON.stringify(data.map(i => ({ id: i.id, code: i.code, name: i.name, barcode: i.barcode, purchasePrice: i.purchase_price, salePrice: i.sale_price, qty: i.qty, warehouseName: i.warehouse_name, warehouseId: 1 }))));
+            }
         }
 
-        // 4. القيود
-        const entriesRes = await fetch('/api/entries', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
-        if (entriesRes.ok) {
-            const entries = await entriesRes.json();
-            localStorage.setItem('onyx_entries', JSON.stringify(entries));
-            console.log('✅ [Sync] القيود: ' + entries.length);
+        // 4. الصفحات التي تحتاج فواتير المبيعات
+        if (path.includes('invoice') || path.includes('reports') || path.includes('index')) {
+            const invRes = await fetch('/api/sales_invoices', { headers });
+            if (invRes.ok) {
+                const data = await invRes.json();
+                localStorage.setItem('onyx_invoices', JSON.stringify(data));
+            }
         }
 
-        // 5. فواتير المبيعات
-        const invRes = await fetch('/api/sales_invoices', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
-        if (invRes.ok) {
-            const invoices = await invRes.json();
-            localStorage.setItem('onyx_invoices', JSON.stringify(invoices));
-            console.log('✅ [Sync] فواتير المبيعات: ' + invoices.length);
+        // 5. الصفحات التي تحتاج القيود
+        if (path.includes('entries') || path.includes('reports') || path.includes('index')) {
+            const entriesRes = await fetch('/api/entries', { headers });
+            if (entriesRes.ok) {
+                const data = await entriesRes.json();
+                localStorage.setItem('onyx_entries', JSON.stringify(data));
+            }
         }
 
-        // 6. فواتير المشتريات
-        const purRes = await fetch('/api/purchase_invoices', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
-        if (purRes.ok) {
-            const purchases = await purRes.json();
-            localStorage.setItem('onyx_purchases', JSON.stringify(purchases));
-            console.log('✅ [Sync] فواتير المشتريات: ' + purchases.length);
-        }
+        console.log('✅ [Sync] اكتملت مزامنة البيانات للصفحة الحالية.');
 
     } catch (error) {
-        console.error('❌ [Sync] خطأ في الاتصال بالخادم:', error);
+        console.warn('⚠️ تعذر الاتصال بالخادم الخلفي.', error);
     }
 };
 

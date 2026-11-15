@@ -1,0 +1,279 @@
+﻿import os
+import re
+
+print("🚀 بدء تحسين الأداء وإنشاء صفحة الهبوط للبيع...")
+
+# ==========================================
+# 1. تحسين الأداء (Lazy Loading) في database.js
+# ==========================================
+db_path = 'assets/js/database.js'
+with open(db_path, 'r', encoding='utf-8') as f:
+    db_js = f.read()
+
+# استبدال دالة المزامنة القديمة بدالة ذكية تجلب فقط ما تحتاجه الصفحة
+new_sync_function = """
+// ==========================================
+// مزامنة البيانات الذكية (Lazy Loading) لتحسين الأداء
+// ==========================================
+window.initBackendSync = async function() {
+    if (window.location.protocol === 'file:') return;
+    const path = window.location.pathname;
+    const headers = { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' };
+    
+    try {
+        console.log('🔄 [Sync] جاري جلب البيانات المطلوبة للصفحة...');
+        
+        // 1. الصفحات التي تحتاج العملاء (الفواتير، التقارير، العملاء)
+        if (path.includes('customer') || path.includes('sales') || path.includes('invoice') || path.includes('reports') || path.includes('index')) {
+            const custRes = await fetch('/api/customers', { headers });
+            if (custRes.ok) {
+                const data = await custRes.json();
+                localStorage.setItem('onyx_customers', JSON.stringify(data.map(c => ({ id: c.id, code: c.code, name: c.name, phone: c.phone, balance: c.balance, creditLimit: c.credit_limit, isOnHold: c.is_on_hold }))));
+            }
+        }
+
+        // 2. الصفحات التي تحتاج الموردين (المشتريات، الموردين)
+        if (path.includes('supplier') || path.includes('purchase')) {
+            const supRes = await fetch('/api/suppliers', { headers });
+            if (supRes.ok) {
+                const data = await supRes.json();
+                localStorage.setItem('onyx_suppliers', JSON.stringify(data));
+            }
+        }
+
+        // 3. الصفحات التي تحتاج الأصناف (المخزون، الفواتير)
+        if (path.includes('inventory') || path.includes('sales') || path.includes('purchase')) {
+            const itemsRes = await fetch('/api/items', { headers });
+            if (itemsRes.ok) {
+                const data = await itemsRes.json();
+                localStorage.setItem('onyx_items', JSON.stringify(data.map(i => ({ id: i.id, code: i.code, name: i.name, barcode: i.barcode, purchasePrice: i.purchase_price, salePrice: i.sale_price, qty: i.qty, warehouseName: i.warehouse_name, warehouseId: 1 }))));
+            }
+        }
+
+        // 4. الصفحات التي تحتاج فواتير المبيعات
+        if (path.includes('invoice') || path.includes('reports') || path.includes('index')) {
+            const invRes = await fetch('/api/sales_invoices', { headers });
+            if (invRes.ok) {
+                const data = await invRes.json();
+                localStorage.setItem('onyx_invoices', JSON.stringify(data));
+            }
+        }
+
+        // 5. الصفحات التي تحتاج القيود
+        if (path.includes('entries') || path.includes('reports') || path.includes('index')) {
+            const entriesRes = await fetch('/api/entries', { headers });
+            if (entriesRes.ok) {
+                const data = await entriesRes.json();
+                localStorage.setItem('onyx_entries', JSON.stringify(data));
+            }
+        }
+
+        console.log('✅ [Sync] اكتملت مزامنة البيانات للصفحة الحالية.');
+
+    } catch (error) {
+        console.warn('⚠️ تعذر الاتصال بالخادم الخلفي.', error);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.initBackendSync();
+});
+"""
+
+# مسح الدالة القديمة واستبدالها بالجديدة
+if 'window.initBackendSync' in db_js:
+    db_js = db_js.split('// ==========================================\n// مزامنة البيانات من الخادم الخلفي')[0]
+    db_js += new_sync_function
+else:
+    db_js += new_sync_function
+
+with open(db_path, 'w', encoding='utf-8') as f:
+    f.write(db_js)
+print("✅ 1. تم تفعيل نظام التحميل المتأخر (Lazy Loading) لتسريع النظام.")
+
+# ==========================================
+# 2. إنشاء صفحة الهبوط (landing.html)
+# ==========================================
+landing_html = """<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعز سوفت | نظام إدارة الموارد المتكامل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0f172a; --accent: #10b981; --text: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body { background: var(--primary); color: var(--text); overflow-x: hidden; }
+        
+        /* Navbar */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 50px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-svg { width: 45px; height: 45px; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5)); }
+        .logo-text h1 { font-size: 22px; font-weight: 900; font-family: 'Segoe UI', sans-serif; letter-spacing: 1px; }
+        .logo-text span { color: var(--accent); }
+        .nav-btn { background: var(--accent); color: white; padding: 10px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .nav-btn:hover { background: #059669; transform: translateY(-2px); }
+
+        /* Hero Section */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 120px 20px 50px; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); position: relative; }
+        .hero h2 { font-size: 50px; font-weight: 900; margin-bottom: 20px; line-height: 1.3; }
+        .hero h2 span { color: var(--accent); }
+        .hero p { font-size: 18px; color: var(--text-muted); max-width: 700px; margin-bottom: 40px; line-height: 1.8; }
+        .hero-btns { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px 40px; border-radius: 12px; text-decoration: none; font-size: 18px; font-weight: 800; box-shadow: 0 10px 25px rgba(16,185,129,0.3); transition: 0.3s; }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(16,185,129,0.5); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; padding: 16px 40px; border-radius: 12px; text-decoration: none; font-size: 18px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        /* Features Section */
+        .features { padding: 80px 50px; background: #0f172a; text-align: center; }
+        .section-title { font-size: 36px; font-weight: 800; margin-bottom: 50px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .feature-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; transition: 0.3s; text-align: right; }
+        .feature-card:hover { transform: translateY(-5px); border-color: var(--accent); background: rgba(16,185,129,0.05); }
+        .feature-icon { font-size: 40px; margin-bottom: 15px; }
+        .feature-card h4 { font-size: 20px; margin-bottom: 10px; color: var(--text); }
+        .feature-card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+        /* Contact Section */
+        .contact { padding: 80px 20px; text-align: center; background: #020617; }
+        .contact-box { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--accent); padding: 40px; border-radius: 20px; max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .contact-item { display: flex; justify-content: center; align-items: center; gap: 15px; font-size: 20px; font-weight: bold; }
+        .contact-item a { color: var(--text); text-decoration: none; transition: 0.3s; }
+        .contact-item a:hover { color: var(--accent); }
+        .icon-badge { font-size: 24px; }
+
+        /* Footer */
+        footer { text-align: center; padding: 30px; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo-area">
+            <div class="logo-svg">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs><linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#34d399;stop-opacity:1" /><stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" /></linearGradient></defs>
+                    <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="none" stroke="url(#brandGrad)" stroke-width="6" stroke-linejoin="round"/>
+                    <path d="M30 30 L70 30 M50 30 L50 75" stroke="url(#brandGrad)" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M65 45 C65 35, 55 35, 50 40 C45 45, 55 55, 50 60 C45 65, 35 60, 35 55" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="logo-text"><h1>TAIZ <span>SOFT</span></h1></div>
+        </div>
+        <a href="/login.html" class="nav-btn">تسجيل الدخول</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h2>نظام <span>تعز سوفت</span> المتكامل<br>لإدارة موارد مؤسستك</h2>
+        <p>نظام ERP محاسبي سحابي متوافق مع معايير ZATCA السعودية. يغنيك عن الأنظمة الباهظة ويمنحك تحكماً كاملاً في المحاسبة، المبيعات، المخزون، والموارد البشرية من مكان واحد.</p>
+        <div class="hero-btns">
+            <a href="#pricing" class="btn-primary">🚀 اشترك الآن</a>
+            <a href="/login.html" class="btn-secondary">دخول النظام</a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <h3 class="section-title">لماذا تختار تعز سوفت؟</h3>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h4>محاسبة دقيقة ومتوافقة</h4>
+                <p>قيود يومية ذكية، ميزان مراجعة، وقوائم مالية كاملة (دخل، ميزانية، تدفقات نقدية) متوافقة مع SOCPA.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h4>الامتثال لـ ZATCA</h4>
+                <p>توليد فواتير إلكترونية مع QR Code، وحساب ضريبة القيمة المضافة (15%) وضريبة الاستقطاع تلقائياً.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h4>إدارة مخزون ذكية</h4>
+                <p>تعدد المستودعات، تحويلات، تقييم (WAC و FIFO)، ودعم الباركود لضمان دقة الجرد.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h4>موارد بشرية متكاملة</h4>
+                <p>مسير رواتب، حساب التأمينات (GOSI)، مكافأة نهاية الخدمة (EOS)، وإدارة الحضور والانصراف.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h4>سحابي 100%</h4>
+                <p>يعمل من أي متصفح وأي جهاز. بياناتك محفوظة في قاعدة بيانات PostgreSQL آمنة ومستقرة.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h4>حماية وعزل البيانات</h4>
+                <p>نظام (Multi-Tenancy) يضمن عزل بيانات كل شركة عن الأخرى تماماً، مع نظام أكواد تفعيل صارم.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Pricing -->
+    <section class="contact" id="pricing">
+        <h3 class="section-title">احصل على ترخيصك الآن</h3>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">تواصل معنا مباشرة لشراء كود التفعيل السنوي</p>
+        <div class="contact-box">
+            <div class="contact-item">
+                <span class="icon-badge">📱</span>
+                <span>واتساب:</span>
+                <a href="https://wa.me/967770136569" target="_blank">+967 770 136 569</a>
+            </div>
+            <div class="contact-item">
+                <span class="icon-badge">✉️</span>
+                <span>البريد الإلكتروني:</span>
+                <a href="mailto:mranqlan@gmail.com">mranqlan@gmail.com</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        © 2026 Taiz Soft. جميع الحقوق محفوظة.
+    </footer>
+
+</body>
+</html>"""
+
+with open('landing.html', 'w', encoding='utf-8') as f:
+    f.write(landing_html)
+print("✅ 2. تم إنشاء صفحة الهبوط (landing.html) مع بيانات التواصل.")
+
+# ==========================================
+# 3. تحديث app.py لجعل صفحة الهبوط هي الافتراضية
+# ==========================================
+app_path = 'backend/app.py'
+with open(app_path, 'r', encoding='utf-8') as f:
+    app_code = f.read()
+
+if "return send_from_directory(root_dir, 'login.html')" in app_code:
+    app_code = app_code.replace(
+        "return send_from_directory(root_dir, 'login.html')",
+        "return send_from_directory(root_dir, 'landing.html')"
+    )
+    with open(app_path, 'w', encoding='utf-8') as f:
+        f.write(app_code)
+    print("✅ 3. تم تحديث الخادم لعرض صفحة الهبوط أولاً.")
+
+# ==========================================
+# 4. تحديث الكاش
+# ==========================================
+count = 0
+for root, dirs, files in os.walk('.'):
+    if '.venv' in root or '.git' in root or '__pycache__' in root: continue
+    for file in files:
+        if file.endswith('.html'):
+            filepath = os.path.join(root, file)
+            with open(filepath, 'r', encoding='utf-8') as f:
+                html = f.read()
+            html = re.sub(r'src="([^"]+\.js)(\?v=\d+)?"', r'src="\1?v=222111"', html)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(html)
+            count += 1
+
+print(f"✅ 4. تم تحديث الكاش لـ {count} صفحة.")
+print("🎉 اكتمل الإصلاح الشامل! يرجى الرفع إلى GitHub.")
