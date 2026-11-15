@@ -180,7 +180,7 @@
         </div>
     </div>
 
-    <script src="/assets/js/database.js?v=444444"></script>
+    <script src="/assets/js/database.js?v=333333"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('onyx_current_user');
@@ -209,7 +209,7 @@
             if (username === 'admin' && pass === '123456') {
                 const adminUser = { id: 1, username: "admin", fullName: "OMRAN AQLAN", role: "admin" };
                 localStorage.setItem('onyx_current_user', JSON.stringify(adminUser));
-                window.location.href = '/pages/welcome.html';
+                window.location.href = '/pages/activate.html';
                 return;
             }
 
@@ -217,7 +217,7 @@
                 const user = getUsers().find(u => u.username === username);
                 if (user && user.password === pass) {
                     localStorage.setItem('onyx_current_user', JSON.stringify(user));
-                    window.location.href = '/pages/welcome.html';
+                    window.location.href = '/pages/activate.html';
                 } else {
                     errorDiv.style.display = 'block';
                     errorDiv.textContent = 'كلمة المرور أو اسم المستخدم غير صحيح!';

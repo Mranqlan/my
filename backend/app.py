@@ -5,9 +5,9 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import json
 try:
-    from models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice
+    from models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice, ActivationCode
 except ImportError:
-    from backend.models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice
+    from backend.models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice, ActivationCode
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -125,6 +125,31 @@ def serve_frontend(path):
         return send_from_directory(root_dir, path)
     else:
         return send_from_directory(root_dir, 'login.html')
+
+
+@app.route('/api/activate', methods=['POST'])
+def activate():
+    data = request.json
+    code_str = data.get('code', '').strip()
+    username = data.get('username', 'Unknown')
+    
+    if not code_str:
+        return jsonify({"success": False, "message": "يرجى إدخال الكود"}), 400
+        
+    ac = ActivationCode.query.filter_by(code=code_str).first()
+    
+    if not ac:
+        return jsonify({"success": False, "message": "كود التفعيل غير صحيح أو غير موجود"}), 404
+        
+    if ac.is_used:
+        return jsonify({"success": False, "message": "هذا الكود مستخدم بالفعل من قبل"}), 400
+        
+    # تفعيل الكود
+    ac.is_used = True
+    ac.used_by = username
+    db.session.commit()
+    
+    return jsonify({"success": True, "message": "تم تفعيل النظام بنجاح!"}), 200
 
 if __name__ == '__main__':
     print("=" * 60)
