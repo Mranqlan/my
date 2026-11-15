@@ -172,7 +172,7 @@ function getSettings() {
     if (!settings) {
         // الإعدادات الافتراضية
         const defaultSettings = {
-            companyName: "AL SHAMEL ACCOUNTING",
+            companyName: "تعز سوفت",
             companyTagline: "Integrated Accounting Systems",
             currency: "ريال",
             logoText: "S",

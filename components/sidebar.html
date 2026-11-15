@@ -1,18 +1,49 @@
-<div class="sidebar-header">
-    <div class="logo-box">S</div>
-    <div class="logo-text">
-        <h2>AL SHAMEL</h2>
-        <span class="logo-subtitle">Enterprise ERP</span>
+
+<div class="sidebar-header" style="padding: 20px 15px;">
+    <div class="logo-box" style="background: transparent; box-shadow: none; width: 50px; height: 50px;">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#34d399;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <!-- الشكل السداسي -->
+            <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="none" stroke="url(#brandGrad)" stroke-width="6" stroke-linejoin="round"/>
+            <!-- حرف T -->
+            <path d="M30 30 L70 30 M50 30 L50 75" stroke="url(#brandGrad)" stroke-width="8" stroke-linecap="round"/>
+            <!-- حرف S المتداخل -->
+            <path d="M65 45 C65 35, 55 35, 50 40 C45 45, 55 55, 50 60 C45 65, 35 60, 35 55" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <div class="logo-text" style="display: flex; flex-direction: column; justify-content: center; margin-right: 10px;">
+        <h2 style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 1.5px; color: #ffffff; margin: 0; text-transform: uppercase;">
+            TAIZ <span style="color: #10b981;">SOFT</span>
+        </h2>
+        <span class="logo-subtitle" style="font-family: 'Noto Naskh Arabic', sans-serif; font-size: 12px; letter-spacing: 0px; color: #94a3b8; font-weight: 700; margin-top: 2px;">
+            تعز سوفت | Enterprise ERP
+        </span>
     </div>
 </div>
+
 <nav class="sidebar-nav">
     <ul>
-        <!-- ===== المجموعة 1: الرئيسية ===== -->
-        <li class="nav-item active">
-            <a href="/index.html">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">لوحة التحكم</span> </a>
+        
+        <!-- ===== تبويب تعز سوفت الترحيبي ===== -->
+        <li class="nav-item">
+            <a href="/pages/welcome.html">
+                <span class="nav-icon">✨</span>
+                <span class="nav-label">تعز سوفت (الرئيسية)</span>
+            </a>
         </li>
+        <!-- ===== لوحة التحكم ===== -->
+        <li class="nav-item">
+            <a href="/index.html">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">لوحة التحكم</span>
+            </a>
+        </li>
+
         <li class="nav-item">
             <a href="/pages/reports/executive-dashboard.html">
                 <span class="nav-icon">📊</span>
