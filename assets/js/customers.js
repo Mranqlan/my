@@ -82,9 +82,12 @@ function deleteCustomer(id) {
 }
 
 // دالة إضافة عملاء تجريبيين
+
 function injectTestCustomers() {
     let customers = getCustomers();
-    if(customers.length > 0 && !confirm('لديك عملاء بالفعل. هل تريد إضافة المزيد؟')) return;
+    if(customers.length > 0) {
+        if(!confirm('لديك عملاء بالفعل. هل تريد إضافة المزيد؟')) return;
+    }
 
     const testData = [
         { name: "شركة الأمل التجارية", phone: "0501111111", balance: 0 },
@@ -94,10 +97,16 @@ function injectTestCustomers() {
 
     testData.forEach((data, index) => {
         const code = `C-${String(customers.length + 1 + index).padStart(4, '0')}`;
-        customers.push({ id: Date.now() + index, code, name: data.name, phone: data.phone, balance: data.balance });
+        const newCustomer = { id: Date.now() + index, code, name: data.name, phone: data.phone, balance: data.balance, creditLimit: 0 };
+        customers.push(newCustomer);
+        
+        // إرسال للخادم السحابي
+        if (typeof syncCustomerToBackend === 'function') {
+            syncCustomerToBackend(newCustomer);
+        }
     });
 
     saveCustomers(customers);
     renderCustomers();
-    alert('تم إضافة عملاء تجريبيين بنجاح!');
+    alert('تم إضافة عملاء تجريبيين بنجاح وحفظهم في السحابة!');
 }

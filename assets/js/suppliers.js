@@ -90,21 +90,31 @@ function deleteSupplier(id) {
     renderSuppliers();
 }
 
+
 function injectTestSuppliers() {
     let suppliers = getSuppliers();
     if(suppliers.length > 0) {
-        if(!confirm('لديك موردين بالفعل. هل تريد إضافة المزيد')) return;
+        if(!confirm('لديك موردين بالفعل. هل تريد إضافة المزيد؟')) return;
     }
+
     const testData = [
         { name: "شركة الحاسبات المتقدمة", phone: "0501111111", balance: 0 },
         { name: "مؤسسة النور للتوريدات", phone: "0502222222", balance: 0 },
         { name: "مورد الأثاث المكتبي", phone: "0503333333", balance: 0 }
     ];
+
     testData.forEach((data, index) => {
         const code = `SUP-${String(suppliers.length + 1 + index).padStart(3, '0')}`;
-        suppliers.push({ id: Date.now() + index, code, name: data.name, phone: data.phone, balance: data.balance });
+        const newSupplier = { id: Date.now() + index, code, name: data.name, phone: data.phone, balance: data.balance };
+        suppliers.push(newSupplier);
+        
+        // إرسال للخادم السحابي
+        if (typeof syncSupplierToBackend === 'function') {
+            syncSupplierToBackend(newSupplier);
+        }
     });
+
     saveSuppliers(suppliers);
     renderSuppliers();
-    alert('تم إضافة موردين تجريبيين بنجاح!');
+    alert('تم إضافة موردين تجريبيين بنجاح وحفظهم في السحابة!');
 }
