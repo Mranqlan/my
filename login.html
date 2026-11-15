@@ -180,7 +180,7 @@
         </div>
     </div>
 
-    <script src="/assets/js/database.js?v=333333"></script>
+    <script src="/assets/js/database.js?v=222222"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('onyx_current_user');
@@ -200,23 +200,28 @@
             }
         });
 
+        
         function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
             const errorDiv = document.getElementById('error-message');
 
-            if (username === 'admin' && pass === '123456') {
+            // دخول المدير العام المباشر (بدون تفعيل)
+            if (username === 'admin' && pass === 'omran770136569') {
                 const adminUser = { id: 1, username: "admin", fullName: "OMRAN AQLAN", role: "admin" };
                 localStorage.setItem('onyx_current_user', JSON.stringify(adminUser));
-                window.location.href = '/pages/activate.html';
+                localStorage.setItem('onyx_license_valid', 'true'); // تخطي التفعيل
+                window.location.href = '/pages/welcome.html';
                 return;
             }
 
+            // دخول المستخدمين العاديين
             try {
                 const user = getUsers().find(u => u.username === username);
                 if (user && user.password === pass) {
                     localStorage.setItem('onyx_current_user', JSON.stringify(user));
+                    localStorage.removeItem('onyx_license_valid'); // يجب عليهم التفعيل
                     window.location.href = '/pages/activate.html';
                 } else {
                     errorDiv.style.display = 'block';
@@ -227,6 +232,7 @@
                 errorDiv.textContent = 'حدث خطأ. يرجى المحاولة مرة أخرى.';
             }
         }
+    
     </script>
 </body>
 </html>

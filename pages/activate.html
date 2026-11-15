@@ -101,5 +101,16 @@
             }
         }
     </script>
+
+    <script>
+        // Super Admin Bypass
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('onyx_current_user') || '{}');
+            if (user.username === 'admin' || localStorage.getItem('onyx_license_valid') === 'true') {
+                window.location.href = '/pages/welcome.html';
+            }
+        });
+    </script>
+    
 </body>
 </html>
