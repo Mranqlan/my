@@ -9,6 +9,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(50), nullable=False, default='accountant')
+    tenant_id = db.Column(db.String(50), default='default_company')
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Customer(db.Model):
@@ -19,6 +21,7 @@ class Customer(db.Model):
     balance = db.Column(db.Float, default=0.0)
     credit_limit = db.Column(db.Float, default=0.0)
     is_on_hold = db.Column(db.Boolean, default=False)
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Supplier(db.Model):
@@ -27,6 +30,7 @@ class Supplier(db.Model):
     name = db.Column(db.String(150), nullable=False)
     phone = db.Column(db.String(20))
     balance = db.Column(db.Float, default=0.0)
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Item(db.Model):
@@ -38,6 +42,7 @@ class Item(db.Model):
     sale_price = db.Column(db.Float, default=0.0)
     qty = db.Column(db.Float, default=0.0)
     warehouse_name = db.Column(db.String(100))
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class JournalEntry(db.Model):
@@ -49,6 +54,7 @@ class JournalEntry(db.Model):
     total_debit = db.Column(db.Float, default=0.0)
     total_credit = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='posted')
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class SalesInvoice(db.Model):
@@ -64,6 +70,7 @@ class SalesInvoice(db.Model):
     exchange_rate = db.Column(db.Float)
     base_total = db.Column(db.Float)
     items_json = db.Column(db.Text)
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class PurchaseInvoice(db.Model):
@@ -76,6 +83,7 @@ class PurchaseInvoice(db.Model):
     warehouse = db.Column(db.String(100))
     branch_name = db.Column(db.String(100))
     items_json = db.Column(db.Text)
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -83,6 +91,8 @@ class PurchaseInvoice(db.Model):
 class ActivationCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(50), unique=True, nullable=False)
+    tenant_id = db.Column(db.String(50), default='default_company')
     is_used = db.Column(db.Boolean, default=False)
     used_by = db.Column(db.String(100))
+    tenant_id = db.Column(db.String(50), default='default_company')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
