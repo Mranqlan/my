@@ -44,8 +44,10 @@ function loadInvoiceDropdowns() {
 function buildItemOptions(selectElement) {
     selectElement.innerHTML = '<option value="">-- اختر الصنف --</option>';
     try {
-        getItems().forEach(item => {
-            if (item.qty > 0) {
+        const items = getItems();
+        console.log('🔍 جلب الأصناف للفاتورة:', items); // رسالة تظهر في F12
+        items.forEach(item => {
+            if (parseFloat(item.qty) > 0) {
                 selectElement.innerHTML += `<option value="${item.id}" data-price="${item.salePrice}" data-cost="${item.purchasePrice}" data-qty="${item.qty}" data-name="${item.name}">${item.code} - ${item.name} (متوفر: ${item.qty})</option>`;
             }
         });

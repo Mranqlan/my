@@ -114,7 +114,7 @@ function saveItem(event) {
 
     // توليد باركود تلقائي إذا لم يتم إدخاله (12 رقم)
     const barcodeInput = document.getElementById('item-barcode');
-    const barcode = barcodeInput ? barcodeInput.value.trim() : Math.floor(100000000000 + Math.random() * 900000000000).toString();
+    const barcode = (barcodeInput && barcodeInput.value.trim() !== '') ? barcodeInput.value.trim() : Math.floor(100000000000 + Math.random() * 900000000000).toString();
 
     const newItem = {
         id: Date.now(),
