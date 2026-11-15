@@ -40,6 +40,7 @@ function loadInvoiceDropdowns() {
     } catch(e) { console.error("خطأ في تحميل القوائم:", e); }
 }
 
+
 function buildItemOptions(selectElement) {
     selectElement.innerHTML = '<option value="">-- اختر الصنف --</option>';
     try {
