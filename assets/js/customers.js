@@ -75,10 +75,24 @@ function saveCustomer(event) {
     alert('تم إضافة العميل بنجاح وحفظه في قاعدة البيانات!');
 }
 
-function deleteCustomer(id) {
-    if (!confirm('هل أنت متأكد من حذف هذا العميل؟')) return;
-    saveCustomers(getCustomers().filter(c => c.id !== id));
-    renderCustomers();
+
+async function deleteCustomer(id) {
+    const result = await Swal.fire({
+        title: 'هل أنت متأكد؟',
+        text: "سيتم حذف هذا العميل نهائياً!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'نعم، احذف',
+        cancelButtonText: 'إلغاء'
+    });
+
+    if (result.isConfirmed) {
+        saveCustomers(getCustomers().filter(c => c.id !== id));
+        renderCustomers();
+        Swal.fire('تم الحذف!', 'تم حذف العميل بنجاح.', 'success');
+    }
 }
 
 // دالة إضافة عملاء تجريبيين

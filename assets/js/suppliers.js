@@ -84,10 +84,24 @@ function saveSupplier(event) {
     }
 }
 
-function deleteSupplier(id) {
-    if (!confirm('هل أنت متأكد من حذف هذا المورد')) return;
-    saveSuppliers(getSuppliers().filter(s => s.id !== id));
-    renderSuppliers();
+
+async function deleteSupplier(id) {
+    const result = await Swal.fire({
+        title: 'هل أنت متأكد؟',
+        text: "سيتم حذف هذا المورد نهائياً!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'نعم، احذف',
+        cancelButtonText: 'إلغاء'
+    });
+
+    if (result.isConfirmed) {
+        saveSuppliers(getSuppliers().filter(s => s.id !== id));
+        renderSuppliers();
+        Swal.fire('تم الحذف!', 'تم حذف المورد بنجاح.', 'success');
+    }
 }
 
 
