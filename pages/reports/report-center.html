@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مركز التقارير | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .report-section { margin-bottom: 40px; }
+        .report-section-title {
+            display: flex; align-items: center; gap: 12px; padding: 15px 20px;
+            background: linear-gradient(135deg, #0f172a, #1e293b); color: white;
+            border-radius: 12px; margin-bottom: 20px; font-size: 18px; font-weight: 800;
+        }
+        .report-section-title .icon { font-size: 26px; }
+        .report-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .report-card {
+            background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); transition: all 0.3s; cursor: pointer;
+            display: flex; flex-direction: column; text-decoration: none; color: inherit;
+        }
+        .report-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-color: #10b981; }
+        .report-card .report-icon { font-size: 32px; margin-bottom: 12px; }
+        .report-card h4 { font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; }
+        .report-card p { font-size: 13px; color: #64748b; margin: 0; line-height: 1.5; }
+        .report-card .arrow { margin-top: 15px; color: #10b981; font-weight: bold; font-size: 13px; }
+        .filter-banner {
+            background: linear-gradient(135deg, #10b981, #059669); color: white;
+            padding: 20px; border-radius: 12px; margin-bottom: 30px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .filter-banner select {
+            padding: 10px 20px; border-radius: 8px; border: none; font-size: 15px;
+            font-weight: bold; cursor: pointer; font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>📊 مركز التقارير (Report Center)</h2>
+                <div class="header-actions">
+                    <span style="font-size: 14px; color: #64748b; font-weight: bold;">كل تقارير النظام في مكان واحد</span>
+                </div>
+            </div>
+            <!-- فلتر الفرع -->
+            <div class="filter-banner">
+                <div>
+                    <div style="font-size: 13px; opacity: 0.9; margin-bottom: 5px;">🏢 اختر الفرع لعرض التقارير الخاصة به</div>
+                    <select id="global-branch-filter" onchange="applyGlobalFilter()">
+                        <option value="all">🌐 كل الفروع (تقارير عامة)</option>
+                    </select>
+                </div>
+                <div style="text-align: left;">
+                    <div style="font-size: 13px; opacity: 0.9;">التقارير ستُصفى تلقائياً بناءً على اختيارك</div>
+                    <div style="font-size: 22px; font-weight: 800;" id="current-branch-display">كل الفروع</div>
+                </div>
+            </div>
+            <!-- قسم المبيعات -->
+            <div class="report-section">
+                <div class="report-section-title">
+                    <span class="icon">🛍️</span>
+                    <span>تقارير المبيعات (Sales Reports)</span>
+                </div>
+                <div class="report-grid">
+                    <a href="/pages/commercial/invoices-list.html" class="report-card">
+                        <div class="report-icon">🧾</div>
+                        <h4>تقرير المبيعات التفصيلي</h4>
+                        <p>يعرض كل فواتير المبيعات مع تفاصيل العميل والأصناف والضريبة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/sales-returns.html" class="report-card">
+                        <div class="report-icon">↩️</div>
+                        <h4>تقرير مرتجعات المبيعات</h4>
+                        <p>كل المرتجعات التي تم إرجاعها من العملاء مع القيود المحاسبية.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/aging-report.html" class="report-card">
+                        <div class="report-icon">⏳</div>
+                        <h4>تقرير أعمار الديون</h4>
+                        <p>تصنيف ديون العملاء حسب الفترة الزمنية (0-30، 31-60، +90 يوم).</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/customer-statement.html" class="report-card">
+                        <div class="report-icon">👤</div>
+                        <h4>كشف حساب عميل</h4>
+                        <p>كل الحركات المالية لعميل محدد مع الرصيد التراكمي بعد كل حركة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/bad-debt-provision.html" class="report-card">
+                        <div class="report-icon">⚠️</div>
+                        <h4>مخصص الديون المشكوك فيها</h4>
+                        <p>احتساب مخصص للديون القديمة (أكثر من 90 يوم) لغرض الإغلاق.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/sales-orders.html" class="report-card">
+                        <div class="report-icon">📋</div>
+                        <h4>أوامر البيع (SO)</h4>
+                        <p>كل أوامر البيع قيد الانتظار والمحولة إلى فواتير.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                </div>
+            </div>
+            <!-- قسم المشتريات -->
+            <div class="report-section">
+                <div class="report-section-title">
+                    <span class="icon">🛒</span>
+                    <span>تقارير المشتريات (Purchases Reports)</span>
+                </div>
+                <div class="report-grid">
+                    <a href="/pages/commercial/purchases-list.html" class="report-card">
+                        <div class="report-icon">📄</div>
+                        <h4>تقرير المشتريات التفصيلي</h4>
+                        <p>يعرض كل فواتير المشتريات مع تفاصيل المورد والأصناف.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/purchase-returns.html" class="report-card">
+                        <div class="report-icon">↩️</div>
+                        <h4>تقرير مرتجعات المشتريات</h4>
+                        <p>كل المرتجعات التي تم إرجاعها للموردين.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/supplier-aging.html" class="report-card">
+                        <div class="report-icon">⏳</div>
+                        <h4>تقرير أعمار ديون الموردين</h4>
+                        <p>تصنيف مستحقات الموردين حسب الفترة الزمنية.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/purchase-orders.html" class="report-card">
+                        <div class="report-icon">📋</div>
+                        <h4>أوامر الشراء (PO)</h4>
+                        <p>كل أوامر الشراء قيد الانتظار والمحولة إلى فواتير.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/suppliers.html" class="report-card">
+                        <div class="report-icon">🏭</div>
+                        <h4>تقرير الموردين</h4>
+                        <p>قائمة بجميع الموردين مع أرصدتهم الحالية.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/commercial/customers.html" class="report-card">
+                        <div class="report-icon">👥</div>
+                        <h4>تقرير العملاء</h4>
+                        <p>قائمة بجميع العملاء مع أرصدتهم وحدود الائتمان.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                </div>
+            </div>
+            <!-- قسم المخزون -->
+            <div class="report-section">
+                <div class="report-section-title">
+                    <span class="icon">📦</span>
+                    <span>تقارير المخزون (Inventory Reports)</span>
+                </div>
+                <div class="report-grid">
+                    <a href="/pages/inventory.html" class="report-card">
+                        <div class="report-icon">📦</div>
+                        <h4>تقرير الأصناف الحالي</h4>
+                        <p>قائمة بجميع الأصناف مع متوسط التكلفة والكميات المتوفرة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/inventory/stock-transfer.html" class="report-card">
+                        <div class="report-icon">🔄</div>
+                        <h4>تقرير تحويلات المخزون</h4>
+                        <p>كل حركات التحويل بين المستودعات مع التاريخ والكمية.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/inventory/adjustments.html" class="report-card">
+                        <div class="report-icon">⚠️</div>
+                        <h4>تقرير التسويات (التالف)</h4>
+                        <p>كل عمليات الجرد التالف والفاقد مع القيود المحاسبية.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/inventory/warehouses.html" class="report-card">
+                        <div class="report-icon">🏭</div>
+                        <h4>تقرير المستودعات</h4>
+                        <p>قائمة بجميع المستودعات والمواقع التابعة لها.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                </div>
+            </div>
+            <!-- قسم التقارير المالية -->
+            <div class="report-section">
+                <div class="report-section-title">
+                    <span class="icon">💰</span>
+                    <span>التقارير المالية (Financial Reports)</span>
+                </div>
+                <div class="report-grid">
+                    <a href="/pages/accounts/trial-balance.html" class="report-card">
+                        <div class="report-icon">⚖️</div>
+                        <h4>ميزان المراجعة</h4>
+                        <p>أرصدة كل الحسابات وتأكيد توازن المدين والدائن.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/income-statement.html" class="report-card">
+                        <div class="report-icon">📈</div>
+                        <h4>قائمة الدخل</h4>
+                        <p>الإيرادات - المصروفات = صافي الربح أو الخسارة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/balance-sheet.html" class="report-card">
+                        <div class="report-icon">🏛️</div>
+                        <h4>الميزانية العمومية</h4>
+                        <p>الأصول = الخصوم + حقوق الملكية (مع شريط التوازن).</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/cash-flow.html" class="report-card">
+                        <div class="report-icon">💵</div>
+                        <h4>قائمة التدفقات النقدية</h4>
+                        <p>حركة النقدية داخل وخارج الشركة خلال فترة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/vat-return.html" class="report-card">
+                        <div class="report-icon">🧾</div>
+                        <h4>الإقرار الضريبي</h4>
+                        <p>ضريبة المخرجات - ضريبة المدخلات = صافي الضريبة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/financial-analysis.html" class="report-card">
+                        <div class="report-icon">📊</div>
+                        <h4>التحليل المالي والنسب</h4>
+                        <p>8 نسب (سيولة، ربحية، مديونية) مع مؤشرات ملونة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/budgets.html" class="report-card">
+                        <div class="report-icon">🎯</div>
+                        <h4>الموازنات التقديرية</h4>
+                        <p>مقارنة الموازنة المخططة بالفعلي وإظهار الانحرافات.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/financial/audit-trail.html" class="report-card">
+                        <div class="report-icon">🔍</div>
+                        <h4>سجل التدقيق</h4>
+                        <p>كل العمليات (إضافة/حذف) مع المستخدم والوقت.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/financial/bank-reconciliation.html" class="report-card">
+                        <div class="report-icon">🏦</div>
+                        <h4>تسوية البنك</h4>
+                        <p>مطابقة رصيد النظام مع كشف البنك الفعلي.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                </div>
+            </div>
+            <!-- قسم تقارير الفروع -->
+            <div class="report-section">
+                <div class="report-section-title">
+                    <span class="icon">🏢</span>
+                    <span>تقارير الفروع (Branch Reports)</span>
+                </div>
+                <div class="report-grid">
+                    <a href="/pages/reports/branch-reports-hub.html" class="report-card">
+                        <div class="report-icon">📊</div>
+                        <h4>مركز تقارير الفروع</h4>
+                        <p>تقارير منفصلة لكل فرع + تقارير عامة شاملة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/branch-analysis.html" class="report-card">
+                        <div class="report-icon">🔍</div>
+                        <h4>تحليل أداء الفروع</h4>
+                        <p>لوحة قيادة لكل فرع: موظفيه، مخزونه، إيراداته ومصروفاته.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/reports/executive-dashboard.html" class="report-card">
+                        <div class="report-icon">👑</div>
+                        <h4>اللوحة التنفيذية</h4>
+                        <p>رؤية شاملة للمدير التنفيذي بأربعة رسوم بيانية متقدمة.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                    <a href="/pages/accounts/account-statement.html" class="report-card">
+                        <div class="report-icon">📖</div>
+                        <h4>كشف حساب تفصيلي</h4>
+                        <p>حركة أي حساب (دفتر الأستاذ) مع الرصيد التراكمي.</p>
+                        <div class="arrow">← عرض التقرير</div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const branches = getCostCenters().filter(c => c.type === 'فرع');
+            const select = document.getElementById('global-branch-filter');
+            branches.forEach(b => {
+                select.innerHTML += `<option value="${b.id}">${b.name} (${b.code})</option>`;
+            });
+            const savedBranch = localStorage.getItem('onyx_report_branch_filter');
+            if (savedBranch) {
+                select.value = savedBranch;
+                const branchName = savedBranch === 'all' ? 'كل الفروع' : branches.find(b => b.id == savedBranch)?.name || 'كل الفروع';
+                document.getElementById('current-branch-display').textContent = branchName;
+            }
+        });
+        function applyGlobalFilter() {
+            const value = document.getElementById('global-branch-filter').value;
+            localStorage.setItem('onyx_report_branch_filter', value);
+            const branches = getCostCenters().filter(c => c.type === 'فرع');
+            const branchName = value === 'all' ? 'كل الفروع' : branches.find(b => b.id == value)?.name || 'كل الفروع';
+            document.getElementById('current-branch-display').textContent = branchName;
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

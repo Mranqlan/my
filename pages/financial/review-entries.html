@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مراجعة القيود | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .status-draft { background: #fef3c7; color: #92400e; }
+        .status-posted { background: #d1fae5; color: #065f46; }
+        .status-reversed { background: #fee2e2; color: #991b1b; text-decoration: line-through; }
+        .action-btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; margin: 0 2px; }
+        .btn-approve { background: #3b82f6; color: white; }
+        .btn-reverse { background: #f59e0b; color: white; }
+        .btn-delete { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>📋 مراجعة القيود اليومية</h2>
+                <div class="header-actions">
+                    <a href="journal-entries.html" class="btn btn-primary">+ إدخال قيد جديد</a>
+                </div>
+            </div>
+            <!-- ملخص سريع -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+                <div class="kpi-card border-blue" style="height: auto; padding: 15px;"><div class="kpi-info"><span>إجمالي القيود</span><h3 id="sum-total" style="font-size: 22px;">0</h3></div></div>
+                <div class="kpi-card border-amber" style="height: auto; padding: 15px; border-right-color: #f59e0b;"><div class="kpi-info"><span>مسودات</span><h3 id="sum-draft" style="font-size: 22px; color: #f59e0b;">0</h3></div></div>
+                <div class="kpi-card border-green" style="height: auto; padding: 15px;"><div class="kpi-info"><span>معتمدة</span><h3 id="sum-posted" style="font-size: 22px; color: #10b981;">0</h3></div></div>
+                <div class="kpi-card border-red" style="height: auto; padding: 15px;"><div class="kpi-info"><span>معكوسة</span><h3 id="sum-reversed" style="font-size: 22px; color: #ef4444;">0</h3></div></div>
+            </div>
+            <!-- فلتر -->
+            <div style="margin-bottom: 20px;">
+                <select id="status-filter" onchange="renderEntries()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: inherit; font-weight: bold; font-size: 14px;">
+                    <option value="all">كل القيود</option>
+                    <option value="draft">المسودات فقط</option>
+                    <option value="posted">المعتمدة فقط</option>
+                    <option value="reversed">المعكوسة فقط</option>
+                </select>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>رقم القيد</th>
+                            <th>التاريخ</th>
+                            <th>البيان</th>
+                            <th>المدين</th>
+                            <th>الدائن</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="review-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { renderEntries(); });
+        function renderEntries() {
+            const tbody = document.getElementById('review-body');
+            if (!tbody) return;
+            const allEntries = getEntries().slice().reverse();
+            const filter = document.getElementById('status-filter').value;
+            // إحصائيات
+            const drafts = allEntries.filter(e => !e.status || e.status === 'draft').length;
+            const posted = allEntries.filter(e => e.status === 'posted').length;
+            const reversed = allEntries.filter(e => e.status === 'reversed').length;
+            document.getElementById('sum-total').textContent = allEntries.length;
+            document.getElementById('sum-draft').textContent = drafts;
+            document.getElementById('sum-posted').textContent = posted;
+            document.getElementById('sum-reversed').textContent = reversed;
+            const filtered = filter === 'all' ? allEntries : allEntries.filter(e => (e.status || 'draft') === filter);
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b; padding: 30px;">لا توجد قيود مطابقة.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            filtered.forEach(entry => {
+                const status = entry.status || 'draft';
+                let statusHTML = '';
+                if (status === 'draft') statusHTML = '<span class="status-badge status-draft">✏️ مسودة</span>';
+                else if (status === 'posted') statusHTML = '<span class="status-badge status-posted">✅ معتمد</span>';
+                else if (status === 'reversed') statusHTML = '<span class="status-badge status-reversed">↩️ معكوس</span>';
+                let actions = '';
+                if (status === 'draft') {
+                    actions = `<button class="action-btn btn-approve" onclick="approveEntryNow(${entry.id})">✅ اعتماد</button>
+                               <button class="action-btn btn-delete" onclick="deleteEntryNow(${entry.id})">🗑️ حذف</button>`;
+                } else if (status === 'posted') {
+                    actions = `<button class="action-btn btn-reverse" onclick="reverseEntryNow(${entry.id})">↩️ عكس</button>`;
+                } else {
+                    actions = `<span style="font-size: 11px; color: #64748b;">معكوس بـ ${entry.reversedBy || ''}</span>`;
+                }
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: bold; color: var(--primary-color);">${entry.entryNumber}</td>
+                        <td>${entry.date}</td>
+                        <td style="text-align: right;">${entry.description || '-'}</td>
+                        <td class="text-debit">${entry.totalDebit.toFixed(2)}</td>
+                        <td class="text-credit">${entry.totalCredit.toFixed(2)}</td>
+                        <td>${statusHTML}</td>
+                        <td>${actions}</td>
+                    </tr>
+                `;
+            });
+        }
+        function approveEntryNow(id) {
+            if (!confirm('هل تريد اعتماد هذا القيد؟ بعد الاعتماد لن يمكن حذفه، فقط عكسه.')) return;
+            if (approveEntry(id)) {
+                alert('تم اعتماد القيد بنجاح!');
+                renderEntries();
+            }
+        }
+        function reverseEntryNow(id) {
+            if (!confirm('هل تريد عكس هذا القيد؟ سيتم إنشاء قيد معاكس تلقائياً.')) return;
+            const result = reverseEntry(id);
+            if (result) {
+                alert('تم عكس القيد بنجاح!\nالقيد الجديد: ' + result.entryNumber);
+                renderEntries();
+            }
+        }
+        function deleteEntryNow(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه المسودة نهائياً؟')) return;
+            let entries = getEntries().filter(e => e.id !== id);
+            saveEntries(entries);
+            if (typeof saveAuditLog === 'function') saveAuditLog("حذف مسودة", "تم حذف مسودة برقم المعرف " + id);
+            renderEntries();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

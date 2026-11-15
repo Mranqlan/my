@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>إدارة الائتمان | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .credit-hero { background: linear-gradient(135deg, #0f172a, #b91c1c, #ef4444); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(239,68,68,0.25); }
+        .credit-hero h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-top: 4px solid #cbd5e1; text-align: center; }
+        .kpi-card.total { border-top-color: #3b82f6; }
+        .kpi-card.limit { border-top-color: #f59e0b; }
+        .kpi-card.used { border-top-color: #ef4444; }
+        .kpi-card.hold { border-top-color: #64748b; }
+        .kpi-card .lbl { font-size: 13px; color: #64748b; font-weight: 700; margin-bottom: 8px; }
+        .kpi-card .val { font-size: 26px; font-weight: 800; font-family: monospace; color: #0f172a; }
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .data-table th { background: #f8fafc; padding: 15px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; border-bottom: 2px solid #e2e8f0; }
+        .data-table td { padding: 15px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .status-safe { background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-warning { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-danger { background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-hold { background: #334155; color: #f8fafc; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; }
+        .btn-hold { background: #ef4444; color: white; }
+        .btn-unhold { background: #10b981; color: white; }
+        .btn-edit { background: #3b82f6; color: white; }
+        .progress-bar { width: 100%; background: #e2e8f0; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="credit-hero">
+                <div>
+                    <h2>🛡️ إدارة الائتمان المتقدمة (Credit Control)</h2>
+                    <p style="margin:5px 0 0 0; opacity:0.9;">مراقبة حدود الائتمان الديون المتأخرة وتجميد حسابات العملاء (متوافق مع ZATCA)</p>
+                </div>
+            </div>
+            <div class="kpi-grid" id="kpi-container"></div>
+            <div style="margin-bottom:20px; display:flex; gap:10px;">
+                <input type="text" id="search-cust" placeholder="ابحث باسم العميل..." oninput="renderCreditTable()" style="flex:1; padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; outline:none;">
+                <select id="filter-status" onchange="renderCreditTable()" style="padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; font-weight:bold; background:white;">
+                    <option value="all">كل الحالات</option>
+                    <option value="safe">آمن (أقل من 70%)</option>
+                    <option value="warning">تحذير (70% - 99%)</option>
+                    <option value="danger">تجاوز الحد (100%+)</option>
+                    <option value="hold">موقوف (Credit Hold)</option>
+                </select>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>كود العميل</th>
+                        <th>اسم العميل</th>
+                        <th>حد الائتمان</th>
+                        <th>الرصيد الحالي (المديونية)</th>
+                        <th>الائتمان المتاح</th>
+                        <th>نسبة الاستهلاك</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="credit-body"></tbody>
+            </table>
+        </section>
+    </main>
+    <script>
+        let allCustomers = [];
+        document.addEventListener('DOMContentLoaded', () => {
+            allCustomers = getCustomers();
+            renderKPIs();
+            renderCreditTable();
+        });
+        function renderKPIs() {
+            let totalLimit = 0, totalUsed = 0, holdCount = 0;
+            allCustomers.forEach(c => {
+                totalLimit += (parseFloat(c.creditLimit) || 0);
+                totalUsed += (parseFloat(c.balance) || 0);
+                if (c.isOnHold) holdCount++;
+            });
+            document.getElementById('kpi-container').innerHTML = `
+                <div class="kpi-card total"><div class="lbl">إجمالي العملاء</div><div class="val" style="color:#3b82f6;">${allCustomers.length}</div></div>
+                <div class="kpi-card limit"><div class="lbl">إجمالي حدود الائتمان</div><div class="val" style="color:#f59e0b;">${totalLimit.toFixed(2)}</div></div>
+                <div class="kpi-card used"><div class="lbl">إجمالي المديونية</div><div class="val" style="color:#ef4444;">${totalUsed.toFixed(2)}</div></div>
+                <div class="kpi-card hold"><div class="lbl">حسابات موقوفة</div><div class="val" style="color:#334155;">${holdCount}</div></div>
+            `;
+        }
+        function renderCreditTable() {
+            const tbody = document.getElementById('credit-body');
+            const search = document.getElementById('search-cust').value.toLowerCase();
+            const filter = document.getElementById('filter-status').value;
+            tbody.innerHTML = '';
+            let filtered = allCustomers.filter(c => c.name.toLowerCase().includes(search));
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد نتائج مطابقة.</td></tr>';
+                return;
+            }
+            filtered.forEach(c => {
+                const limit = parseFloat(c.creditLimit) || 0;
+                const balance = parseFloat(c.balance) || 0;
+                const available = limit - balance;
+                const percent = limit > 0 ? (balance / limit) * 100 : (balance > 0 ? 100 : 0);
+                let statusHTML = '', statusType = '', progressColor = '';
+                if (c.isOnHold) {
+                    statusHTML = '<span class="status-hold">⛔ موقوف</span>';
+                    statusType = 'hold';
+                    progressColor = '#334155';
+                } else if (percent >= 100) {
+                    statusHTML = '<span class="status-danger">🔴 تجاوز الحد</span>';
+                    statusType = 'danger';
+                    progressColor = '#ef4444';
+                } else if (percent >= 70) {
+                    statusHTML = '<span class="status-warning">🟡 تحذير</span>';
+                    statusType = 'warning';
+                    progressColor = '#f59e0b';
+                } else {
+                    statusHTML = '<span class="status-safe">🟢 آمن</span>';
+                    statusType = 'safe';
+                    progressColor = '#10b981';
+                }
+                // تطبيق الفلتر
+                if (filter !== 'all' && filter !== statusType) return;
+                // زر التجميد/فك التجميد
+                let actionBtn = c.isOnHold 
+                    ? `<button class="btn-sm btn-unhold" onclick="toggleHold(${c.id})">✅ فك التجميد</button>`
+                    : `<button class="btn-sm btn-hold" onclick="toggleHold(${c.id})">⛔ تجميد</button>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family:monospace; font-weight:bold; color:#64748b;">${c.code}</td>
+                        <td style="font-weight:800; color:#0f172a;">${c.name}</td>
+                        <td style="font-family:monospace;">${limit.toFixed(2)}</td>
+                        <td style="font-family:monospace; color:#ef4444; font-weight:700;">${balance.toFixed(2)}</td>
+                        <td style="font-family:monospace; color:${available >= 0 ? '#10b981' : '#ef4444'}; font-weight:700;">${available.toFixed(2)}</td>
+                        <td>
+                            <div style="font-size:12px; font-weight:bold; color:#64748b; margin-bottom:3px;">${percent.toFixed(1)}%</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width:${Math.min(percent, 100)}%; background:${progressColor};"></div>
+                            </div>
+                        </td>
+                        <td>${statusHTML}</td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+        function toggleHold(id) {
+            const cust = allCustomers.find(c => c.id === id);
+            if (!cust) return;
+            const action = cust.isOnHold ? 'فك تجميد' : 'تجميد';
+            if (!confirm(`هل أنت متأكد من ${action} حساب العميل "${cust.name}"`)) return;
+            toggleCustomerCreditHold(id);
+            allCustomers = getCustomers(); // تحديث البيانات المحلية
+            renderKPIs();
+            renderCreditTable();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

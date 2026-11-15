@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>اللوحة التنفيذية | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=777777"></script>
+    <style>
+        /* تصميم اللوحة التنفيذية - نسخة فاخرة */
+        .exec-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #10b981 100%);
+            color: white; padding: 30px; border-radius: 20px; margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+            position: relative; overflow: hidden;
+        }
+        .exec-hero::before {
+            content: ''; position: absolute; top: -50%; right: -50%;
+            width: 100%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        .exec-hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 5px; }
+        .exec-hero p { opacity: 0.9; font-size: 14px; }
+        .exec-hero-stats { display: flex; gap: 40px; margin-top: 25px; position: relative; }
+        .exec-hero-stats > div { display: flex; flex-direction: column; }
+        .exec-hero-stats .label { font-size: 12px; opacity: 0.8; margin-bottom: 5px; }
+        .exec-hero-stats .val { font-size: 24px; font-weight: 800; font-family: monospace; }
+        /* شبكة البطاقات */
+        .exec-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .exec-kpi {
+            background: white; padding: 22px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;
+            transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .exec-kpi:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .exec-kpi::after {
+            content: ''; position: absolute; top: 0; right: 0; width: 60px; height: 60px;
+            background: radial-gradient(circle, var(--accent-light) 0%, transparent 70%);
+            opacity: 0.5; border-radius: 0 16px 0 100%;
+        }
+        .exec-kpi.rev { --accent-light: #dbeafe; }
+        .exec-kpi.exp { --accent-light: #fee2e2; }
+        .exec-kpi.prof { --accent-light: #d1fae5; }
+        .exec-kpi.cash { --accent-light: #fef3c7; }
+        .exec-kpi .icon-wrap {
+            width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin-bottom: 15px;
+        }
+        .exec-kpi.rev .icon-wrap { background: #dbeafe; color: #1e40af; }
+        .exec-kpi.exp .icon-wrap { background: #fee2e2; color: #991b1b; }
+        .exec-kpi.prof .icon-wrap { background: #d1fae5; color: #065f46; }
+        .exec-kpi.cash .icon-wrap { background: #fef3c7; color: #92400e; }
+        .exec-kpi .title { font-size: 13px; color: #64748b; font-weight: 600; margin-bottom: 8px; }
+        .exec-kpi .val { font-size: 26px; font-weight: 800; font-family: monospace; color: #0f172a; letter-spacing: -0.5px; }
+        .exec-kpi .sub { font-size: 12px; margin-top: 8px; color: #94a3b8; display: flex; align-items: center; gap: 5px; }
+        /* شبكة الرسوم */
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .chart-box {
+            background: white; padding: 25px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;
+            height: 380px; display: flex; flex-direction: column;
+        }
+        .chart-box h3 {
+            font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .chart-box h3 .badge {
+            font-size: 11px; background: #f1f5f9; color: #64748b; padding: 4px 10px;
+            border-radius: 20px; font-weight: 600;
+        }
+        .chart-wrapper { flex: 1; position: relative; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>المدير التنفيذي</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <!-- البطاقة الترحيبية الفخمة -->
+            <div class="exec-hero">
+                <h1>👑 مرحباً بك في لوحة القيادة التنفيذية</h1>
+                <p>نظرة شاملة على الأداء المالي والتشغيلي لشركتك</p>
+                <div class="exec-hero-stats">
+                    <div><span class="label">📊 الإيرادات</span><span class="val" id="hero-rev">0.00</span></div>
+                    <div><span class="label">📉 المصروفات</span><span class="val" id="hero-exp">0.00</span></div>
+                    <div><span class="label">💎 صافي الربح</span><span class="val" id="hero-prof">0.00</span></div>
+                </div>
+            </div>
+            <!-- شبكة KPIs -->
+            <div class="exec-kpi-grid">
+                <div class="exec-kpi rev">
+                    <div class="icon-wrap">📈</div>
+                    <div class="title">إجمالي الإيرادات</div>
+                    <div class="val" id="e-rev">0.00</div>
+                    <div class="sub">ريال سعودي</div>
+                </div>
+                <div class="exec-kpi exp">
+                    <div class="icon-wrap">📉</div>
+                    <div class="title">إجمالي المصروفات</div>
+                    <div class="val" id="e-exp">0.00</div>
+                    <div class="sub">ريال سعودي</div>
+                </div>
+                <div class="exec-kpi prof">
+                    <div class="icon-wrap">💎</div>
+                    <div class="title">صافي الربح</div>
+                    <div class="val" id="e-prof">0.00</div>
+                    <div class="sub" id="e-prof-sub">0% هامش ربح</div>
+                </div>
+                <div class="exec-kpi cash">
+                    <div class="icon-wrap">💰</div>
+                    <div class="title">السيولة النقدية</div>
+                    <div class="val" id="e-cash">0.00</div>
+                    <div class="sub">الصندوق + البنك</div>
+                </div>
+            </div>
+            <!-- الرسوم البيانية -->
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3>📈 اتجاه الأداء المالي <span class="badge">شهرياً</span></h3>
+                    <div class="chart-wrapper"><canvas id="trendChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3>🍩 هيكل المصروفات <span class="badge">تحليل</span></h3>
+                    <div class="chart-wrapper"><canvas id="expenseChart"></canvas></div>
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3>🏆 أكبر 5 عملاء (بالرصيد) <span class="badge">ذمم مدينة</span></h3>
+                    <div class="chart-wrapper"><canvas id="customersChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3>📦 حالة المخزون <span class="badge">إجمالي الكميات</span></h3>
+                    <div class="chart-wrapper"><canvas id="inventoryChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        let charts = {};
+        Chart.defaults.font.family = "'Noto Naskh Arabic', sans-serif";
+        Chart.defaults.color = '#64748b';
+        document.addEventListener('DOMContentLoaded', () => { loadExecutiveData(); });
+        function loadExecutiveData() {
+            const accounts = getAccounts();
+            const entries = getEntries();
+            const customers = getCustomers();
+            const items = getItems();
+            let totalRevenue = 0, totalExpense = 0, cash = 0, bank = 0;
+            let expenseBreakdown = {};
+            let monthlyData = {};
+            accounts.forEach(acc => {
+                let bal = 0;
+                entries.forEach(e => {
+                    const month = e.date.substring(0, 7);
+                    if (!monthlyData[month]) monthlyData[month] = { rev: 0, exp: 0 };
+                    e.lines.forEach(l => {
+                        if (l.accountCode === acc.code) {
+                            if (acc.type === 'أصول' || acc.type === 'مصروفات') bal += (l.debit - l.credit);
+                            else bal += (l.credit - l.debit);
+                        }
+                    });
+                });
+                if (acc.type === 'إيرادات' && acc.level === 2) {
+                    totalRevenue += bal;
+                    entries.forEach(e => e.lines.forEach(l => {
+                        if (l.accountCode === acc.code) monthlyData[e.date.substring(0,7)].rev += (l.credit - l.debit);
+                    }));
+                }
+                if (acc.type === 'مصروفات' && acc.level === 2 && bal > 0) {
+                    totalExpense += bal;
+                    expenseBreakdown[acc.name] = bal;
+                    entries.forEach(e => e.lines.forEach(l => {
+                        if (l.accountCode === acc.code) monthlyData[e.date.substring(0,7)].exp += (l.debit - l.credit);
+                    }));
+                }
+                if (acc.code === '1101') cash = bal;
+                if (acc.code === '1102') bank = bal;
+            });
+            const netProfit = totalRevenue - totalExpense;
+            const margin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
+            // تعبئة KPI
+            document.getElementById('hero-rev').textContent = totalRevenue.toFixed(2);
+            document.getElementById('hero-exp').textContent = totalExpense.toFixed(2);
+            document.getElementById('hero-prof').textContent = netProfit.toFixed(2);
+            document.getElementById('e-rev').textContent = totalRevenue.toFixed(2);
+            document.getElementById('e-exp').textContent = totalExpense.toFixed(2);
+            document.getElementById('e-prof').textContent = netProfit.toFixed(2);
+            document.getElementById('e-prof').style.color = netProfit >= 0 ? '#10b981' : '#ef4444';
+            document.getElementById('e-prof-sub').textContent = margin.toFixed(1) + '% هامش ربح';
+            document.getElementById('e-cash').textContent = (cash + bank).toFixed(2);
+            // === 1. رسم الاتجاه (Line) ===
+            const sortedMonths = Object.keys(monthlyData).sort();
+            const revData = sortedMonths.map(m => monthlyData[m].rev);
+            const expData = sortedMonths.map(m => monthlyData[m].exp);
+            // إذا كان هناك نقطة واحدة فقط، نضاعفها لرسم خط
+            const finalLabels = sortedMonths.length > 1 ? sortedMonths : ['بداية الفترة', 'الحالي'];
+            const finalRev = revData.length > 1 ? revData : [revData[0] || 0, revData[0] || 0];
+            const finalExp = expData.length > 1 ? expData : [expData[0] || 0, expData[0] || 0];
+            if (charts.trend) charts.trend.destroy();
+            charts.trend = new Chart(document.getElementById('trendChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: finalLabels,
+                    datasets: [
+                        {
+                            label: 'الإيرادات', data: finalRev, borderColor: '#10b981',
+                            backgroundColor: (ctx) => {
+                                const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+                                g.addColorStop(0, 'rgba(16,185,129,0.3)'); g.addColorStop(1, 'rgba(16,185,129,0)');
+                                return g;
+                            },
+                            fill: true, tension: 0.4, borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'المصروفات', data: finalExp, borderColor: '#ef4444',
+                            backgroundColor: (ctx) => {
+                                const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+                                g.addColorStop(0, 'rgba(239,68,68,0.3)'); g.addColorStop(1, 'rgba(239,68,68,0)');
+                                return g;
+                            },
+                            fill: true, tension: 0.4, borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+                }
+            });
+            // === 2. هيكل المصروفات (Doughnut) ===
+            const expLabels = Object.keys(expenseBreakdown);
+            const expValues = Object.values(expenseBreakdown);
+            const softColors = ['#6366f1', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#84cc16'];
+            if (charts.expense) charts.expense.destroy();
+            charts.expense = new Chart(document.getElementById('expenseChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: expLabels.length ? expLabels : ['لا يوجد مصروفات'],
+                    datasets: [{ data: expValues.length ? expValues : [1], backgroundColor: softColors, borderWidth: 3, borderColor: '#fff', hoverOffset: 10 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true, boxWidth: 8, font: { size: 11 } } }
+                    }
+                }
+            });
+            // === 3. أكبر 5 عملاء ===
+            const topCustomers = customers.filter(c => c.balance > 0).sort((a, b) => b.balance - a.balance).slice(0, 5);
+            if (charts.customers) charts.customers.destroy();
+            charts.customers = new Chart(document.getElementById('customersChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: topCustomers.length ? topCustomers.map(c => c.name) : ['لا يوجد مدينين'],
+                    datasets: [{
+                        label: 'الرصيد المستحق', data: topCustomers.length ? topCustomers.map(c => parseFloat(c.balance)) : [0],
+                        backgroundColor: (ctx) => {
+                            const g = ctx.chart.ctx.createLinearGradient(0, 0, 400, 0);
+                            g.addColorStop(0, 'rgba(139, 92, 246, 0.9)'); g.addColorStop(1, 'rgba(139, 92, 246, 0.4)');
+                            return g;
+                        }, borderRadius: 8, barThickness: 25
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } }
+                }
+            });
+            // === 4. حالة المخزون (Doughnut نظيف بدل Polar) ===
+            let inStock = 0, lowStock = 0, outOfStock = 0;
+            items.forEach(i => { 
+                if (i.qty === 0) outOfStock++; 
+                else if (i.qty <= 5) lowStock++; 
+                else inStock++; 
+            });
+            if (charts.inventory) charts.inventory.destroy();
+            charts.inventory = new Chart(document.getElementById('inventoryChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['كميات جيدة', 'كميات منخفضة', 'نفدت'],
+                    datasets: [{
+                        data: [inStock, lowStock, outOfStock],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 3, borderColor: '#fff', hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true, boxWidth: 8, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

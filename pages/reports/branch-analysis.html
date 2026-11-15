@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة الفروع</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=777777"></script>
+    <style>
+        .branch-selector-box {
+            background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px; border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 20px;
+        }
+        .branch-selector-box select {
+            flex: 1; padding: 12px 20px; font-size: 18px; font-weight: bold;
+            border: 2px solid var(--accent-color); border-radius: 8px; outline: none;
+            background: #f0fdf4; color: var(--primary-color); cursor: pointer;
+        }
+        .branch-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .branch-kpi-card {
+            background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            text-align: center; border-bottom: 4px solid #cbd5e1;
+        }
+        .branch-kpi-card.rev { border-bottom-color: #3b82f6; }
+        .branch-kpi-card.exp { border-bottom-color: #ef4444; }
+        .branch-kpi-card.prof { border-bottom-color: #10b981; }
+        .branch-kpi-card.marg { border-bottom-color: #f59e0b; }
+        .branch-kpi-card .label { font-size: 14px; color: var(--text-light); font-weight: bold; margin-bottom: 10px; }
+        .branch-kpi-card .value { font-size: 26px; font-family: monospace; font-weight: 800; color: var(--text-main); }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .details-card { background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border-color); overflow: hidden; }
+        .details-header { background: #f8fafc; padding: 15px; border-bottom: 2px solid var(--border-color); font-weight: 800; color: var(--primary-color); display: flex; justify-content: space-between; }
+        .details-body { padding: 0; max-height: 400px; overflow-y: auto; }
+        .details-list { list-style: none; padding: 0; margin: 0; }
+        .details-list li { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .details-list li:hover { background: #f8fafc; }
+        .details-list li:last-child { border-bottom: none; }
+        .badge-title { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إدارة وتحليل الفروع (Branch Explorer)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+                </div>
+            </div>
+            <!-- اختيار الفرع -->
+            <div class="branch-selector-box">
+                <label style="font-size: 18px; font-weight: 800; color: var(--text-main);">🏢 اختر الفرع لعرض كافة التفاصيل:</label>
+                <select id="branch-selector" onchange="loadBranchData()">
+                    <option value="">-- يرجى اختيار الفرع --</option>
+                </select>
+            </div>
+            <!-- محتوى الفرع (مخفي حتى يتم الاختيار) -->
+            <div id="branch-content" style="display: none;">
+                <!-- مؤشرات الأداء المالي -->
+                <div class="branch-kpi-grid">
+                    <div class="branch-kpi-card rev">
+                        <div class="label">إجمالي الإيرادات</div>
+                        <div class="value" id="kpi-rev" style="color: #3b82f6;">0.00</div>
+                    </div>
+                    <div class="branch-kpi-card exp">
+                        <div class="label">إجمالي المصروفات</div>
+                        <div class="value" id="kpi-exp" style="color: #ef4444;">0.00</div>
+                    </div>
+                    <div class="branch-kpi-card prof">
+                        <div class="label">صافي الربح / الخسارة</div>
+                        <div class="value" id="kpi-prof">0.00</div>
+                    </div>
+                    <div class="branch-kpi-card marg">
+                        <div class="label">هامش الربح</div>
+                        <div class="value" id="kpi-marg">0%</div>
+                    </div>
+                </div>
+                <!-- التفاصيل (الأقسام الموظفين المخزون) -->
+                <div class="details-grid">
+                    <!-- 1. الموظفون والمديرون -->
+                    <div class="details-card">
+                        <div class="details-header">
+                            <span>👥 الموظفون والمديرون</span>
+                            <span id="count-emps" class="badge-title">0</span>
+                        </div>
+                        <ul class="details-list" id="list-emps"></ul>
+                    </div>
+                    <!-- 2. الأقسام التابعة للفرع -->
+                    <div class="details-card">
+                        <div class="details-header">
+                            <span>📂 الأقسام التابعة للفرع</span>
+                            <span id="count-depts" class="badge-title">0</span>
+                        </div>
+                        <ul class="details-list" id="list-depts"></ul>
+                    </div>
+                    <!-- 3. مخزون الفرع -->
+                    <div class="details-card">
+                        <div class="details-header">
+                            <span>📦 مخزون الفرع (المستودع)</span>
+                            <span id="count-items" class="badge-title">0</span>
+                        </div>
+                        <ul class="details-list" id="list-items"></ul>
+                    </div>
+                </div>
+            </div>
+            <!-- رسالة ترحيبية قبل الاختيار -->
+            <div id="empty-state" style="text-align: center; padding: 50px; color: #94a3b8;">
+                <div style="font-size: 80px; margin-bottom: 20px;">🏢</div>
+                <h2>يرجى اختيار فرع من القائمة أعلاه لعرض لوحة التحكم الخاصة به</h2>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const selector = document.getElementById('branch-selector');
+            const branches = getCostCenters().filter(c => c.type === 'فرع');
+            branches.forEach(b => {
+                selector.innerHTML += `<option value="${b.id}">${b.name} (${b.code})</option>`;
+            });
+        });
+        function loadBranchData() {
+            const branchId = parseInt(document.getElementById('branch-selector').value);
+            if (!branchId) {
+                document.getElementById('branch-content').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                return;
+            }
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('branch-content').style.display = 'block';
+            const branch = getCostCenters().find(c => c.id === branchId);
+            const allEmployees = getEmployees();
+            const allCostCenters = getCostCenters();
+            const allWarehouses = getWarehouses();
+            const allItems = getItems();
+            const entries = getEntries();
+            // 1. الموظفون
+            const branchEmps = allEmployees.filter(e => e.branchId === branchId);
+            const listEmps = document.getElementById('list-emps');
+            listEmps.innerHTML = '';
+            document.getElementById('count-emps').textContent = branchEmps.length;
+            if(branchEmps.length === 0) listEmps.innerHTML = '<li style="justify-content:center; color:#94a3b8;">لا يوجد موظفون مسجلون</li>';
+            branchEmps.forEach(e => {
+                listEmps.innerHTML += `<li>
+                    <div>
+                        <div style="font-weight:bold;">${e.name}</div>
+                        <div style="font-size:12px; color:var(--text-light);">${e.jobTitle || 'بدون مسمى'}</div>
+                    </div>
+                    <span style="font-family:monospace; font-weight:bold; color:var(--primary-color);">${parseFloat(e.base).toFixed(2)}</span>
+                </li>`;
+            });
+            // 2. الأقسام (التي parentId لها نفس الفرع)
+            const branchDepts = allCostCenters.filter(c => c.type === 'قسم' && c.parentId === branchId);
+            const listDepts = document.getElementById('list-depts');
+            listDepts.innerHTML = '';
+            document.getElementById('count-depts').textContent = branchDepts.length;
+            if(branchDepts.length === 0) listDepts.innerHTML = '<li style="justify-content:center; color:#94a3b8;">لا توجد أقسام مسجلة</li>';
+            branchDepts.forEach(d => {
+                // عدد موظفي القسم
+                const deptEmpCount = allEmployees.filter(e => e.branchId === d.id).length;
+                listDepts.innerHTML += `<li>
+                    <div style="font-weight:bold;">↳ ${d.name}</div>
+                    <span class="badge-title">${deptEmpCount} موظف</span>
+                </li>`;
+            });
+            // 3. المخزون (نبحث عن المستودع المرتبط بالفرع)
+            const branchWh = allWarehouses.find(w => w.name.includes(branch.name) || w.id === branch.id) || allWarehouses[0];
+            const branchItems = branchWh ? allItems.filter(i => i.warehouseId === branchWh.id && i.qty > 0) : [];
+            const listItems = document.getElementById('list-items');
+            listItems.innerHTML = '';
+            document.getElementById('count-items').textContent = branchItems.length;
+            if(branchItems.length === 0) listItems.innerHTML = '<li style="justify-content:center; color:#94a3b8;">لا يوجد مخزون في هذا الفرع</li>';
+            branchItems.forEach(i => {
+                listItems.innerHTML += `<li>
+                    <div style="font-weight:bold;">${i.name}</div>
+                    <span style="font-family:monospace; font-weight:bold; color:#10b981;">${i.qty} قطعة</span>
+                </li>`;
+            });
+            // 4. المالية
+            let revenue = 0, expense = 0;
+            const branchEntries = entries.filter(e => e.description && e.description.includes(branch.name));
+            branchEntries.forEach(entry => {
+                entry.lines.forEach(line => {
+                    if (line.accountCode === '4101') revenue += (line.credit - line.debit);
+                    if (line.accountCode.startsWith('5')) expense += (line.debit - line.credit);
+                });
+            });
+            const netProfit = revenue - expense;
+            const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+            const profitColor = netProfit >= 0 ? '#10b981' : '#ef4444';
+            document.getElementById('kpi-rev').textContent = revenue.toFixed(2);
+            document.getElementById('kpi-exp').textContent = expense.toFixed(2);
+            const profEl = document.getElementById('kpi-prof');
+            profEl.textContent = netProfit.toFixed(2);
+            profEl.style.color = profitColor;
+            document.getElementById('kpi-marg').textContent = margin.toFixed(1) + '%';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

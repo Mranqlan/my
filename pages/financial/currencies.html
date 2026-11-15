@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة العملات | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/sidebar.css?v=555555">
+    <style>
+        .currency-hero {
+            background: linear-gradient(135deg, #0f172a, #1e3a8a, #6366f1);
+            color: white; padding: 25px 30px; border-radius: 16px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(99,102,241,0.25);
+        }
+        .currency-hero h2 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; }
+        .currency-hero p { margin: 0; opacity: 0.9; font-size: 13px; }
+        .currency-hero .base-info {
+            background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;
+            backdrop-filter: blur(10px); text-align: center;
+        }
+        .currency-hero .base-info .label { font-size: 11px; opacity: 0.85; margin-bottom: 4px; }
+        .currency-hero .base-info .value { font-size: 20px; font-weight: 800; font-family: monospace; }
+        .currency-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; overflow: hidden; }
+        .currency-table table { width: 100%; border-collapse: collapse; }
+        .currency-table th { background: #f8fafc; padding: 15px 12px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .currency-table td { padding: 14px 12px; font-size: 14px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .currency-table tr:hover td { background: #f8fafc; }
+        .currency-table tr:last-child td { border-bottom: none; }
+        .base-badge { background: linear-gradient(135deg, #10b981, #059669); color: white; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; }
+        .currency-symbol { display: inline-block; width: 30px; height: 30px; background: #f1f5f9; border-radius: 8px; text-align: center; line-height: 30px; font-weight: 800; color: #10b981; margin-left: 8px; }
+        .btn-sm { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; margin: 0 2px; }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-set-base { background: #f59e0b; color: white; }
+        .btn-sm:hover { opacity: 0.85; }
+        .rate-input { width: 100px; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: monospace; font-weight: 700; text-align: center; font-size: 13px; }
+        .rate-input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.15); }
+        .add-btn {
+            background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
+            padding: 12px 24px; border-radius: 10px; font-weight: 800; font-size: 14px;
+            cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+            transition: all 0.2s;
+        }
+        .add-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.4); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="currency-hero">
+                <div>
+                    <h2>💱 إدارة العملات وأسعار الصرف</h2>
+                    <p>إدارة العملات المتعددة وتحديث أسعار الصرف لاستخدامها في الفواتير والقيود</p>
+                </div>
+                <div class="base-info">
+                    <div class="label">العملة الأساسية</div>
+                    <div class="value" id="hero-base">SAR</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="add-btn" onclick="openAddCurrencyModal()">+ إضافة عملة جديدة</button>
+                <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                    💡 ملاحظة: سعر الصرف = كم وحدة من العملة الأساسية تعادل 1 وحدة من هذه العملة
+                </div>
+            </div>
+            <div class="currency-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 10%;">الرمز</th>
+                            <th style="width: 20%;">اسم العملة</th>
+                            <th style="width: 10%;">الرمز النصي</th>
+                            <th style="width: 15%;">سعر الصرف</th>
+                            <th style="width: 15%;">آخر تحديث</th>
+                            <th style="width: 10%;">الحالة</th>
+                            <th style="width: 20%;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="currency-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة/تعديل عملة -->
+    <div class="modal-overlay" id="currency-modal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h3 id="modal-title">إضافة عملة جديدة</h3>
+                <button class="close-btn" onclick="closeCurrencyModal()">×</button>
+            </div>
+            <form onsubmit="saveCurrency(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="cur-id">
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group">
+                            <label>رمز العملة (ISO)</label>
+                            <input type="text" id="cur-code" placeholder="USD" maxlength="3" required style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label>الرمز النصي</label>
+                            <input type="text" id="cur-symbol" placeholder="$" maxlength="5">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>اسم العملة</label>
+                        <input type="text" id="cur-name" placeholder="دولار أمريكي" required>
+                    </div>
+                    <div class="form-group">
+                        <label>سعر الصرف مقابل العملة الأساسية</label>
+                        <input type="text" id="cur-rate" value="1.00" inputmode="decimal" required>
+                        <small style="font-size: 11px; color: #64748b;">مثال: إذا كانت العملة الأساسية SAR، وسعر الدولار 3.75، اكتب 3.75</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCurrencyModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCurrencies();
+        });
+        function renderCurrencies() {
+            const tbody = document.getElementById('currency-body');
+            const currencies = getCurrencies();
+            const base = getBaseCurrency();
+            document.getElementById('hero-base').textContent = base ? base.code : 'SAR';
+            tbody.innerHTML = '';
+            currencies.forEach(c => {
+                const lastUpdated = c.lastUpdated ? new Date(c.lastUpdated).toLocaleDateString('ar-EG') : '-';
+                const isBase = c.isBase;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="currency-symbol">${c.symbol || c.code.substring(0,2)}</span>${c.code}</td>
+                        <td style="font-weight: 700;">${c.name}</td>
+                        <td style="font-family: monospace; color: #64748b;">${c.symbol || '-'}</td>
+                        <td>
+                            ${isBase 
+                                ? '<span style="color: #10b981; font-weight: 800;">1.00 (أساسية)</span>' 
+                                : `<input type="text" class="rate-input" value="${c.rate.toFixed(4)}" onchange="updateRate(${c.id}, this.value)">`
+                            }
+                        </td>
+                        <td style="font-size: 12px; color: #64748b;">${lastUpdated}</td>
+                        <td>${isBase ? '<span class="base-badge">🏆 أساسية</span>' : '<span style="color: #64748b; font-size: 12px;">نشطة</span>'}</td>
+                        <td>
+                            ${!isBase ? `<button class="btn-sm btn-set-base" onclick="setAsBase(${c.id})">تعيين كأساسية</button>` : ''}
+                            <button class="btn-sm btn-edit" onclick="editCurrency(${c.id})">تعديل</button>
+                            ${!isBase ? `<button class="btn-sm btn-delete" onclick="deleteCurrency(${c.id})">حذف</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        function updateRate(id, newRate) {
+            const rate = parseFloat(newRate);
+            if (isNaN(rate) || rate <= 0) {
+                alert('سعر الصرف يجب أن يكون رقماً أكبر من صفر');
+                renderCurrencies();
+                return;
+            }
+            const currencies = getCurrencies();
+            const idx = currencies.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                currencies[idx].rate = rate;
+                currencies[idx].lastUpdated = new Date().toISOString();
+                saveCurrencies(currencies);
+                renderCurrencies();
+            }
+        }
+        function openAddCurrencyModal() {
+            document.getElementById('modal-title').textContent = 'إضافة عملة جديدة';
+            document.getElementById('cur-id').value = '';
+            document.getElementById('cur-code').value = '';
+            document.getElementById('cur-name').value = '';
+            document.getElementById('cur-symbol').value = '';
+            document.getElementById('cur-rate').value = '1.00';
+            document.getElementById('currency-modal').style.display = 'flex';
+        }
+        function editCurrency(id) {
+            const currency = getCurrencies().find(c => c.id === id);
+            if (!currency) return;
+            if (currency.isBase) return alert('لا يمكن تعديل العملة الأساسية');
+            document.getElementById('modal-title').textContent = 'تعديل العملة';
+            document.getElementById('cur-id').value = currency.id;
+            document.getElementById('cur-code').value = currency.code;
+            document.getElementById('cur-name').value = currency.name;
+            document.getElementById('cur-symbol').value = currency.symbol || '';
+            document.getElementById('cur-rate').value = currency.rate;
+            document.getElementById('currency-modal').style.display = 'flex';
+        }
+        function closeCurrencyModal() {
+            document.getElementById('currency-modal').style.display = 'none';
+        }
+        function saveCurrency(event) {
+            event.preventDefault();
+            const id = document.getElementById('cur-id').value;
+            const code = document.getElementById('cur-code').value.toUpperCase().trim();
+            const name = document.getElementById('cur-name').value.trim();
+            const symbol = document.getElementById('cur-symbol').value.trim();
+            const rate = parseFloat(document.getElementById('cur-rate').value);
+            if (isNaN(rate) || rate <= 0) return alert('سعر الصرف غير صحيح');
+            if (code.length !== 3) return alert('رمز العملة يجب أن يكون 3 أحرف (مثل USD, EUR, SAR)');
+            let currencies = getCurrencies();
+            if (id) {
+                // تعديل
+                const idx = currencies.findIndex(c => c.id === parseInt(id));
+                if (idx !== -1) {
+                    currencies[idx].code = code;
+                    currencies[idx].name = name;
+                    currencies[idx].symbol = symbol;
+                    currencies[idx].rate = rate;
+                    currencies[idx].lastUpdated = new Date().toISOString();
+                }
+            } else {
+                // إضافة جديدة
+                if (currencies.some(c => c.code === code)) {
+                    return alert('هذا الرمز موجود بالفعل');
+                }
+                currencies.push({
+                    id: Date.now(),
+                    code: code,
+                    name: name,
+                    symbol: symbol,
+                    rate: rate,
+                    isBase: false,
+                    lastUpdated: new Date().toISOString()
+                });
+            }
+            saveCurrencies(currencies);
+            closeCurrencyModal();
+            renderCurrencies();
+            alert('تم الحفظ بنجاح!');
+        }
+        function setAsBase(id) {
+            if (!confirm('هل تريد تعيين هذه العملة كأساسية؟ سيتم تحويل كل الأسعار تلقائياً.')) return;
+            let currencies = getCurrencies();
+            const newBase = currencies.find(c => c.id === id);
+            if (!newBase) return;
+            const oldBase = currencies.find(c => c.isBase);
+            const oldRate = oldBase ? oldBase.rate : 1;
+            const newRate = newBase.rate;
+            // إعادة حساب أسعار الصرف لكل العملات
+            currencies.forEach(c => {
+                if (c.id === id) {
+                    c.isBase = true;
+                    c.rate = 1;
+                } else {
+                    c.isBase = false;
+                    // السعر الجديد = السعر القديم * (سعر العملة الجديدة القديم / 1)
+                    // مثال: USD rate=3.75, EUR rate=4.05. تعيين EUR كأساسية:
+                    // USD الجديد = 3.75 / 4.05 = 0.926
+                    c.rate = c.rate / newRate;
+                }
+                c.lastUpdated = new Date().toISOString();
+            });
+            saveCurrencies(currencies);
+            renderCurrencies();
+            alert('تم تعيين العملة الأساسية بنجاح!');
+        }
+        function deleteCurrency(id) {
+            const currency = getCurrencies().find(c => c.id === id);
+            if (currency && currency.isBase) return alert('لا يمكن حذف العملة الأساسية');
+            if (!confirm('هل تريد حذف هذه العملة؟')) return;
+            let currencies = getCurrencies().filter(c => c.id !== id);
+            saveCurrencies(currencies);
+            renderCurrencies();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>الموازنات التقديرية</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=777777"></script>
+    <style>
+        @media print { .sidebar, .top-header, .page-header .btn, .no-print { display: none !important; } .main-wrapper, .content-area { margin: 0 !important; padding: 0 !important; } }
+        .variance-positive { color: #10b981; font-weight: bold; }
+        .variance-negative { color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>الموازنات التقديرية (Budgeting)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openBudgetModal()">+ إضافة/تعديل موازنة</button>
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+                </div>
+            </div>
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 25px;">
+                <div class="chart-container">
+                    <h3>الموازنة مقابل الفعلي</h3>
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <h3>ملخص الأداء</h3>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <div style="font-size: 14px; color: var(--text-light); margin-bottom: 5px;">نسبة تنفيذ الموازنة الكلية</div>
+                        <div id="budget-percentage" style="font-size: 55px; font-weight: 800; font-family: monospace; color: var(--primary-color);">0%</div>
+                        <div id="budget-status-text" style="margin-top: 15px; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 16px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الحساب</th>
+                            <th>اسم الحساب</th>
+                            <th>الموازنة المخططة</th>
+                            <th>الفعلي (Actual)</th>
+                            <th>الانحراف (Variance)</th>
+                            <th>نسبة التنفيذ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budget-body"></tbody>
+                    <tfoot>
+                        <tr style="background: #f8fafc; font-weight: bold;">
+                            <td colspan="2" style="text-align: right;">الإجماليات</td>
+                            <td id="total-budget" style="font-family: monospace;">0.00</td>
+                            <td id="total-actual" style="font-family: monospace;">0.00</td>
+                            <td id="total-variance" style="font-family: monospace;">0.00</td>
+                            <td id="total-percent" style="font-family: monospace;">0%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="budget-modal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h3>تحديد موازنة حساب</h3>
+                <button class="close-btn" onclick="closeBudgetModal()">×</button>
+            </div>
+            <form onsubmit="saveBudget(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>اختر الحساب (إيرادات أو مصروفات)</label>
+                        <select id="b-account" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ المخطط (الموازنة السنوية)</label>
+                        <input type="text" inputmode="decimal" id="b-amount" value="0.00" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBudgetModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ الموازنة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        let budgetChartInstance = null;
+        document.addEventListener('DOMContentLoaded', () => { renderBudgets(); });
+        function renderBudgets() {
+            const accounts = getAccounts();
+            const entries = getEntries();
+            const budgets = getBudgets();
+            const tbody = document.getElementById('budget-body');
+            tbody.innerHTML = '';
+            let totalBudget = 0, totalActual = 0;
+            const chartLabels = [], chartBudget = [], chartActual = [];
+            let hasData = false;
+            accounts.forEach(acc => {
+                // نعرض فقط حسابات المستوى 2 التي لها موازنة
+                if (!budgets[acc.code]) return;
+                hasData = true;
+                // حساب الفعلي
+                let actual = 0;
+                entries.forEach(entry => {
+                    entry.lines.forEach(line => {
+                        if (line.accountCode === acc.code) {
+                            if (acc.type === 'إيرادات') actual += (line.credit - line.debit);
+                            else actual += (line.debit - line.credit);
+                        }
+                    });
+                });
+                const budgetAmount = parseFloat(budgets[acc.code]) || 0;
+                const variance = budgetAmount - actual;
+                const percent = budgetAmount > 0 ? (actual / budgetAmount) * 100 : 0;
+                totalBudget += budgetAmount;
+                totalActual += actual;
+                chartLabels.push(acc.name);
+                chartBudget.push(budgetAmount);
+                chartActual.push(actual);
+                let varianceClass = variance >= 0 ? 'variance-positive' : 'variance-negative';
+                let percentColor = percent > 100 ? 'color: #ef4444;' : 'color: #10b981;';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace;">${acc.code}</td>
+                        <td style="text-align: right; font-weight: bold;">${acc.name}</td>
+                        <td style="font-family: monospace;">${budgetAmount.toFixed(2)}</td>
+                        <td style="font-family: monospace;">${actual.toFixed(2)}</td>
+                        <td class="${varianceClass}" style="font-family: monospace;">${variance.toFixed(2)}</td>
+                        <td style="font-family: monospace; ${percentColor}">${percent.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+            if (!hasData) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">لم يتم إدخال أي موازنات بعد. اضغط على "إضافة/تعديل موازنة" للبدء.</td></tr>';
+            }
+            document.getElementById('total-budget').textContent = totalBudget.toFixed(2);
+            document.getElementById('total-actual').textContent = totalActual.toFixed(2);
+            document.getElementById('total-variance').textContent = (totalBudget - totalActual).toFixed(2);
+            const totalPercent = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+            document.getElementById('total-percent').textContent = totalPercent.toFixed(1) + '%';
+            document.getElementById('budget-percentage').textContent = totalPercent.toFixed(0) + '%';
+            const statusText = document.getElementById('budget-status-text');
+            if (totalPercent > 100) {
+                statusText.textContent = '⚠️ تجاوزت الموازنة المخططة';
+                statusText.style.background = '#fee2e2'; statusText.style.color = '#991b1b';
+            } else if (totalPercent > 80) {
+                statusText.textContent = '⚡ اقتربت من الحد الأقصى';
+                statusText.style.background = '#fef3c7'; statusText.style.color = '#92400e';
+            } else {
+                statusText.textContent = '✅ الأداء ضمن الموازنة';
+                statusText.style.background = '#d1fae5'; statusText.style.color = '#065f46';
+            }
+            renderChart(chartLabels, chartBudget, chartActual);
+        }
+        function renderChart(labels, budgetData, actualData) {
+            if (budgetChartInstance) budgetChartInstance.destroy();
+            const ctx = document.getElementById('budgetChart').getContext('2d');
+            budgetChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'الموازنة', data: budgetData, backgroundColor: 'rgba(59, 130, 246, 0.7)', borderRadius: 6 },
+                        { label: 'الفعلي', data: actualData, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderRadius: 6 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+        }
+        function openBudgetModal() {
+            document.getElementById('budget-modal').style.display = 'flex';
+            const select = document.getElementById('b-account');
+            select.innerHTML = '<option value="">-- اختر الحساب --</option>';
+            getAccounts().forEach(acc => {
+                if (acc.level === 2 && (acc.type === 'إيرادات' || acc.type === 'مصروفات')) {
+                    select.innerHTML += `<option value="${acc.code}">${acc.code} - ${acc.name}</option>`;
+                }
+            });
+        }
+        function closeBudgetModal() { document.getElementById('budget-modal').style.display = 'none'; }
+        function saveBudget(event) {
+            event.preventDefault();
+            const code = document.getElementById('b-account').value;
+            const amount = parseFloat(document.getElementById('b-amount').value) || 0;
+            if (!code) return alert('يرجى اختيار الحساب.');
+            let budgets = getBudgets();
+            budgets[code] = amount;
+            saveBudgets(budgets);
+            closeBudgetModal();
+            renderBudgets();
+            alert('تم حفظ الموازنة بنجاح!');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

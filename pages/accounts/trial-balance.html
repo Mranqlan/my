@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>ميزان المراجعة</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555"><link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>ميزان المراجعة</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+                    <button class="btn btn-primary" onclick="generateTrialBalance()">تحديث 🔄</button>
+                </div>
+            </div>
+            <div class="filter-bar" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                <label>من تاريخ:</label><input type="date" id="start-date" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <label>إلى تاريخ:</label><input type="date" id="end-date" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button class="btn btn-primary" onclick="generateTrialBalance()">تصفية</button>
+            </div>
+            <div class="table-container">
+                <table class="data-table trial-balance-table">
+                    <thead><tr><th>رقم الحساب</th><th>اسم الحساب</th><th>حركة مدين</th><th>حركة دائن</th><th>رصيد مدين</th><th>رصيد دائن</th></tr></thead>
+                    <tbody id="tb-body"></tbody>
+                    <tfoot><tr class="totals-row"><td colspan="2">الإجماليات</td><td id="tb-total-debit-movement">0.00</td><td id="tb-total-credit-movement">0.00</td><td id="tb-total-debit-balance">0.00</td><td id="tb-total-credit-balance">0.00</td></tr></tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { generateTrialBalance(); });
+        function generateTrialBalance() {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+            let entries = getEntries();
+            if(start) entries = entries.filter(e => e.date >= start);
+            if(end) entries = entries.filter(e => e.date <= end);
+            const accounts = getAccounts();
+            let tbData = [], totD = 0, totC = 0, totBD = 0, totBC = 0;
+            accounts.forEach(acc => {
+                if (acc.level === 1) return;
+                let tDebit = 0, tCredit = 0;
+                entries.forEach(entry => { entry.lines.forEach(line => {
+                    if (line.accountCode === acc.code) { tDebit += line.debit; tCredit += line.credit; }
+                }); });
+                if (tDebit === 0 && tCredit === 0) return;
+                let bDebit = 0, bCredit = 0, net = tDebit - tCredit;
+                if (net > 0) bDebit = net; else if (net < 0) bCredit = Math.abs(net);
+                totD += tDebit; totC += tCredit; totBD += bDebit; totBC += bCredit;
+                tbData.push({ code: acc.code, name: acc.name, tDebit, tCredit, bDebit, bCredit });
+            });
+            const tbody = document.getElementById('tb-body');
+            tbody.innerHTML = tbData.map(r => `<tr><td class="acc-code-cell">${r.code}</td><td style="text-align:right; padding-right:20px;">${r.name}</td><td>${r.tDebit>0?r.tDebit.toFixed(2):'-'}</td><td>${r.tCredit>0?r.tCredit.toFixed(2):'-'}</td><td class="text-debit">${r.bDebit>0?r.bDebit.toFixed(2):'-'}</td><td class="text-credit">${r.bCredit>0?r.bCredit.toFixed(2):'-'}</td></tr>`).join('');
+            document.getElementById('tb-total-debit-movement').textContent = totD.toFixed(2);
+            document.getElementById('tb-total-credit-movement').textContent = totC.toFixed(2);
+            document.getElementById('tb-total-debit-balance').textContent = totBD.toFixed(2);
+            document.getElementById('tb-total-credit-balance').textContent = totBC.toFixed(2);
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مرتجعات المبيعات</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>مرتجعات المبيعات (Sales Returns)</h2>
+            </div>
+            <div class="entry-form-container">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>اختر الفاتورة الأصلية للعميل</label>
+                    <select id="return-invoice" onchange="loadInvoiceItems()">
+                        <option value="">-- اختر الفاتورة --</option>
+                    </select>
+                </div>
+                <div class="table-responsive" style="display: none;" id="return-items-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="40%">الصنف</th>
+                                <th width="20%">الكمية المباعة</th>
+                                <th width="20%">الكمية المرتجعة</th>
+                                <th width="20%">سعر البيع</th>
+                            </tr>
+                        </thead>
+                        <tbody id="return-items-body"></tbody>
+                    </table>
+                </div>
+                <div class="entry-footer" id="return-footer" style="display: none; border:none; padding-top:20px;">
+                    <div class="totals-section" style="justify-content: space-between; background: #e2e8f0;">
+                        <div class="total-box">
+                            <span>قيمة المرتجع:</span>
+                            <strong id="return-total" style="font-size: 20px; color: #ef4444;">0.00</strong>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="margin-top: 15px; font-size: 18px; padding: 15px; background-color:#ef4444;" onclick="saveReturn()">
+                        حفظ المرتجع وتوليد القيود المحاسبية
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="/assets/js/sales-returns.js?v=777777"></script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

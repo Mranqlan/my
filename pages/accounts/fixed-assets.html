@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>الأصول الثابتة والإهلاك</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>الأصول الثابتة والإهلاك (Fixed Assets)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openAssetModal()">+ إضافة أصل جديد</button>
+                    <button class="btn btn-success" onclick="runDepreciation()" style="background-color: #f59e0b; color: white;">⚙️ احتساب الإهلاك السنوي</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="10%">الكود</th>
+                            <th width="25%">اسم الأصل</th>
+                            <th width="15%">تاريخ الشراء</th>
+                            <th width="15%">سعر الشراء</th>
+                            <th width="10%">العمر (سنة)</th>
+                            <th width="15%">مجمع الإهلاك</th>
+                            <th width="10%">القيمة الدفترية</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة أصل -->
+    <div class="modal-overlay" id="asset-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة أصل ثابت جديد</h3>
+                <button class="close-btn" onclick="closeAssetModal()">×</button>
+            </div>
+            <form id="asset-form" onsubmit="saveAsset(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>اسم الأصل (مثال: سيارة تويوتا لابتوب ديل)</label>
+                        <input type="text" id="asset-name" required placeholder="مثال: سيارة تويوتا جهاز كمبيوتر">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>البند المحاسبي (التصنيف)</label>
+                        <select id="asset-category" required></select>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>تاريخ الشراء</label>
+                            <input type="date" id="asset-date" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>سعر الشراء (التكلفة)</label>
+                            <input type="text" inputmode="decimal" id="asset-cost" value="0.00" required>
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>القيمة التخريدية (الإنقاذ)</label>
+                            <input type="text" inputmode="decimal" id="asset-salvage" value="0.00" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>العمر الإنتاجي (بالسنوات)</label>
+                            <input type="text" inputmode="decimal" id="asset-life" value="5" required>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>طريقة الدفع (لإثبات القيد المحاسبي)</label>
+                        <select id="asset-payment-method" required>
+                            <option value="1101">الصندوق (نقدا)</option>
+                            <option value="1102">البنك (تحويل/شيك)</option>
+                            <option value="2101">على الحساب (موردون)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAssetModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ الأصل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('asset-date').valueAsDate = new Date();
+            renderAssets();
+        });
+        function renderAssets() {
+            const tbody = document.getElementById('assets-body');
+            const assets = getFixedAssets();
+            tbody.innerHTML = '';
+            if (assets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #64748b;">لا توجد أصول ثابتة مسجلة.</td></tr>';
+                return;
+            }
+            assets.forEach(asset => {
+                const bookValue = asset.cost - asset.accumulatedDepreciation;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace;">${asset.code}</td>
+                        <td style="text-align: right; font-weight: bold;">${asset.name}</td>
+                        <td>${asset.date}</td>
+                        <td style="font-family: monospace;">${parseFloat(asset.cost).toFixed(2)}</td>
+                        <td>${asset.life}</td>
+                        <td style="font-family: monospace; color: #ef4444;">${parseFloat(asset.accumulatedDepreciation).toFixed(2)}</td>
+                        <td style="font-family: monospace; font-weight: bold; color: #10b981;">${bookValue.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+        function openAssetModal() {
+            document.getElementById('asset-modal').style.display = 'flex';
+            document.getElementById('asset-form').reset();
+            document.getElementById('asset-date').valueAsDate = new Date();
+            // تعبئة بنود الأصول الثابتة
+            const catSelect = document.getElementById('asset-category');
+            catSelect.innerHTML = '<option value="">-- اختر البند --</option>';
+            const accounts = getAccounts();
+            // نبحث عن الحسابات التي تبدأ بـ 12 (أصول ثابتة) ولا تحتوي على كلمة "مجمع"
+            let foundAny = false;
+            accounts.forEach(acc => {
+                if (acc.code.startsWith('12') && acc.code !== '12' && !acc.name.includes('مجمع')) {
+                    catSelect.innerHTML += `<option value="${acc.code}" data-name="${acc.name}">${acc.code} - ${acc.name}</option>`;
+                    foundAny = true;
+                }
+            });
+            if (!foundAny) {
+                alert('تنبيه: لا توجد بنود أصول ثابتة في شجرة الحسابات. يرجى إضافتها من صفحة دليل الحسابات أولا.');
+            }
+        }
+        function closeAssetModal() { document.getElementById('asset-modal').style.display = 'none'; }
+        function saveAsset(event) {
+            event.preventDefault();
+            const name = document.getElementById('asset-name').value.trim();
+            const date = document.getElementById('asset-date').value;
+            const cost = parseFloat(document.getElementById('asset-cost').value) || 0;
+            const salvage = parseFloat(document.getElementById('asset-salvage').value) || 0;
+            const life = parseFloat(document.getElementById('asset-life').value) || 1;
+            let assets = getFixedAssets();
+            const code = `FA-${String(assets.length + 1).padStart(3, '0')}`;
+            // 1. حفظ الأصل في سجل الأصول (للإهلاك)
+            assets.push({ id: Date.now(), code, name, date, cost, salvage, life, accumulatedDepreciation: 0 });
+            saveFixedAssets(assets);
+            // 2. توليد القيد المحاسبي للشراء باستخدام البند المختار
+            const catSelect = document.getElementById('asset-category');
+            const categoryCode = catSelect.value;
+            const categoryName = catSelect.options[catSelect.selectedIndex]?.getAttribute('data-name');
+            if (!categoryCode) return alert('يرجى اختيار البند المحاسبي للأصل.');
+            const payMethod = document.getElementById('asset-payment-method').value;
+            let payName = "الصندوق (النقدية بالخزينة)";
+            if (payMethod === '1102') payName = "البنك الأهلي (النقدية بالبنك)";
+            if (payMethod === '2101') payName = "الموردون (الذمم الدائنة)";
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(),
+                entryNumber: entryNumber,
+                date: date,
+                description: `شراء أصل ثابت: ${name} (${categoryName})`,
+                lines: [
+                    { accountCode: categoryCode, accountName: categoryName, debit: cost, credit: 0 },
+                    { accountCode: payMethod, accountName: payName, debit: 0, credit: cost }
+                ],
+                totalDebit: cost,
+                totalCredit: cost
+            });
+            saveEntries(entries);
+            // تحديث رصيد المورد إذا كان الشراء على الحساب
+            if (payMethod === '2101') {
+                updateSupplierBalance(1, cost); // افتراضيا المورد الأول أو يمكنك تركه 0 إذا لم يكن هناك مورد محدد
+            }
+            closeAssetModal();
+            renderAssets();
+            alert(`تم حفظ الأصل بنجاح!\nتم توليد قيد الشراء رقم ${entryNumber} وإضافته للميزانية.`);
+        }
+        function runDepreciation() {
+            const assets = getFixedAssets();
+            if (assets.length === 0) return alert('لا توجد أصول لحساب إهلاكها.');
+            let totalDepreciation = 0;
+            let updatedAssets = [];
+            assets.forEach(asset => {
+                const depreciableAmount = asset.cost - asset.salvage;
+                const annualDepreciation = depreciableAmount / asset.life;
+                // التحقق من عدم تجاوز قيمة الأصل
+                if (asset.accumulatedDepreciation < depreciableAmount) {
+                    let amountToDepreciate = annualDepreciation;
+                    if (asset.accumulatedDepreciation + amountToDepreciate > depreciableAmount) {
+                        amountToDepreciate = depreciableAmount - asset.accumulatedDepreciation;
+                    }
+                    totalDepreciation += amountToDepreciate;
+                    asset.accumulatedDepreciation += amountToDepreciate;
+                    updatedAssets.push(asset);
+                }
+            });
+            if (totalDepreciation === 0) {
+                return alert('جميع الأصول وصلت لقيمتها التخريدية لا يوجد إهلاك لحسابه.');
+            }
+            if (!confirm(`إجمالي الإهلاك لهذا العام هو ${totalDepreciation.toFixed(2)}. هل تريد ترحيل القيد المحاسبي`)) return;
+            // حفظ التحديثات للأصول
+            saveFixedAssets(assets);
+            // توليد القيد المحاسبي
+            const date = new Date().toISOString().split('T')[0];
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(),
+                entryNumber: entryNumber,
+                date: date,
+                description: `قيد إهلاك الأصول الثابتة للعام المالي`,
+                lines: [
+                    { accountCode: "5105", accountName: "مصروف إهلاك الأصول", debit: totalDepreciation, credit: 0 },
+                    { accountCode: "1202", accountName: "مجمع إهلاك الأصول الثابتة", debit: 0, credit: totalDepreciation }
+                ],
+                totalDebit: totalDepreciation,
+                totalCredit: totalDepreciation
+            });
+            saveEntries(entries);
+            alert(`تم ترحيل الإهلاك بنجاح!\nتم إنشاء القيد المحاسبي رقم ${entryNumber}`);
+            renderAssets();
+            window.location.href = '/pages/financial/review-entries.html';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

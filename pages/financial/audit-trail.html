@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سجل التدقيق</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile">
+                <span>OMRAN AQLAN</span>
+                <div class="avatar"></div>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="بحث في النظام المحاسبي...">
+            </div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>سجل التدقيق والرقابة (Audit Trail)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة السجل</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="10%">التاريخ</th>
+                            <th width="10%">الوقت</th>
+                            <th width="20%">المستخدم</th>
+                            <th width="20%">نوع العملية</th>
+                            <th width="40%">التفاصيل</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-body">
+                        <!-- سيتم تعبئتها بالجافاسكريبت -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('audit-body');
+            const logs = getAuditLogs();
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 30px;">لا توجد عمليات مسجلة حتى الآن.</td></tr>';
+                return;
+            }
+            logs.forEach(log => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${log.date}</td>
+                        <td style="font-family: monospace;">${log.time}</td>
+                        <td style="font-weight: bold; color: var(--primary-color);">${log.user}</td>
+                        <td><span class="badge badge-إيرادات">${log.action}</span></td>
+                        <td style="text-align: right; padding-right: 15px;">${log.details}</td>
+                    </tr>
+                `;
+            });
+        });
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

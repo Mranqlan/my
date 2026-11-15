@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة العملاء</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile">
+                <span>OMRAN AQLAN</span>
+                <div class="avatar"></div>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="بحث في النظام المحاسبي...">
+            </div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إدارة العملاء (Customers)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openCustomerModal()">+ إضافة عميل جديد</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="10%">كود العميل</th>
+                            <th width="30%">اسم العميل</th>
+                            <th width="20%">رقم الهاتف</th>
+                            <th width="20%">الرصيد الحالي</th>
+                            <th width="15%">حد الائتمان</th>
+                            <th width="20%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customers-body">
+                        <!-- سيتم تعبئتها بالجافاسكريبت -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة عميل -->
+    <div class="modal-overlay" id="customer-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة عميل جديد</h3>
+                <button class="close-btn" onclick="closeCustomerModal()">×</button>
+            </div>
+            <form id="add-customer-form" onsubmit="saveCustomer(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>اسم العميل</label>
+                            <input type="text" id="cust-name" required placeholder="مثال: شركة الأمل التجارية">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="text" id="cust-phone" placeholder="مثال: 0500000000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الرصيد الافتتاحي (مدين)</label>
+                            <input type="number" id="cust-balance" value="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>حد الائتمان (0 = غير محدود)</label>
+                            <input type="number" id="cust-limit" value="0.00" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCustomerModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ العميل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/assets/js/customers.js?v=777777"></script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

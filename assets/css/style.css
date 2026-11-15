@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #0f172a;      /* كحلي غامق جدا للقائمة الجانبية */
+    --secondary-color: #1e293b;    /* كحلي متوسط */
+    --accent-color: #10b981;       /* أخضر زمردي للأزرار والتمييز */
+    --bg-color: #f1f5f9;           /* رمادي فاتح جدا لخلفية المحتوى */
+    --white: #ffffff;
+    --text-main: #1e293b;          /* نص غامق للقراءة المريحة */
+    --text-light: #64748b;         /* نص ثانوي رمادي */
+    --border-color: #e2e8f0;
+    --font-family: 'Noto Naskh Arabic', 'Traditional Arabic', serif;
+    --sidebar-width: 260px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family) !important;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+
+/* =========================================
+   القائمة الجانبية (Sidebar)
+   ========================================= */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--primary-color);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+
+.sidebar-header {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    background-color: var(--secondary-color);
+    border-bottom: 1px solid #334155;
+    gap: 12px;
+}
+
+.logo-box {
+    width: 35px;
+    height: 35px;
+    background-color: var(--accent-color);
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.sidebar-header h2 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px 0;
+}
+
+.sidebar-nav::-webkit-scrollbar { width: 5px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 10px; }
+
+.nav-item > a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #cbd5e1;
+    transition: all 0.2s ease;
+    border-right: 3px solid transparent;
+}
+
+.nav-item > a:hover, 
+.nav-item.active > a {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border-right-color: var(--accent-color);
+}
+
+.arrow { font-size: 10px; transition: transform 0.3s; }
+.nav-item.active .arrow { transform: rotate(180deg); }
+
+.submenu {
+    background-color: #0b1120;
+    display: none;
+}
+
+.nav-item.active .submenu { display: block; }
+
+.submenu li a {
+    display: block;
+    padding: 10px 40px 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+    transition: all 0.2s;
+    border-right: 3px solid transparent;
+}
+
+.submenu li a:hover,
+.submenu li a.active {
+    color: var(--accent-color);
+    background-color: rgba(16, 185, 129, 0.08);
+    border-right-color: var(--accent-color);
+}
+
+/* =========================================
+   المنطقة الرئيسية والشريط العلوي
+   ========================================= */
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.top-header {
+    height: 70px;
+    background-color: var(--white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    z-index: 50;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 800;
+}
+
+.search-box input {
+    width: 300px;
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    outline: none;
+    background-color: #f8fafc;
+}
+
+.search-box input:focus {
+    border-color: var(--accent-color);
+    background-color: var(--white);
+}
+
+.content-area {
+    flex: 1;
+    padding: 25px 30px;
+    overflow-y: auto;
+}
+
+

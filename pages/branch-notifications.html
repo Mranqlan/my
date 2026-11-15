@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مركز الإشعارات | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=777777"></script>
+    <style>
+        .notif-hero { background: linear-gradient(135deg, #0f172a, #1e3a8a, #6366f1); color: white; padding: 30px 40px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 15px 40px rgba(99,102,241,0.3); }
+        .notif-hero h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 800; }
+        .notif-hero p { margin: 0; opacity: 0.9; font-size: 14px; }
+        .notif-hero-stats { display: flex; gap: 40px; margin-top: 20px; }
+        .notif-hero-stats div { display: flex; flex-direction: column; }
+        .notif-hero-stats .lbl { font-size: 12px; opacity: 0.8; }
+        .notif-hero-stats .val { font-size: 26px; font-weight: 800; font-family: monospace; }
+        .branch-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .b-card { background: white; padding: 22px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; }
+        .b-card .title { font-size: 13px; color: #64748b; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+        .b-card .branch-name { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 10px; }
+        .b-card .value { font-size: 24px; font-weight: 800; font-family: monospace; }
+        .b-card .sub { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+        .b-card.gold { border-top: 4px solid #f59e0b; }
+        .b-card.green { border-top: 4px solid #10b981; }
+        .b-card.blue { border-top: 4px solid #3b82f6; }
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .chart-box { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; }
+        .chart-box h3 { margin: 0 0 20px 0; font-size: 16px; font-weight: 800; color: #0f172a; }
+        .chart-wrapper { height: 280px; position: relative; }
+        .notif-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { padding: 10px 18px; border-radius: 20px; border: 2px solid #e2e8f0; background: white; cursor: pointer; font-weight: bold; font-size: 13px; color: #64748b; transition: all 0.2s; }
+        .filter-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+        .filter-btn:hover:not(.active) { border-color: #10b981; color: #10b981; }
+        .notif-list { display: flex; flex-direction: column; gap: 12px; }
+        .notif-item { background: white; border-radius: 12px; padding: 18px 20px; display: flex; gap: 15px; align-items: center; border: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(0,0,0,0.04); transition: all 0.2s; position: relative; overflow: hidden; }
+        .notif-item:hover { transform: translateX(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+        .notif-item::before { content: ''; position: absolute; right: 0; top: 0; width: 5px; height: 100%; }
+        .notif-item.critical::before { background: #ef4444; }
+        .notif-item.warning::before { background: #f59e0b; }
+        .notif-item.success::before { background: #10b981; }
+        .notif-item.info::before { background: #3b82f6; }
+        .notif-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 24px; flex-shrink: 0; }
+        .notif-item.critical .notif-icon { background: #fee2e2; }
+        .notif-item.warning .notif-icon { background: #fef3c7; }
+        .notif-item.success .notif-icon { background: #d1fae5; }
+        .notif-item.info .notif-icon { background: #dbeafe; }
+        .notif-content { flex: 1; }
+        .notif-title { font-weight: 800; color: #0f172a; font-size: 15px; margin-bottom: 5px; }
+        .notif-message { color: #64748b; font-size: 13px; line-height: 1.5; }
+        .notif-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+        .notif-badge.critical { background: #fee2e2; color: #991b1b; }
+        .notif-badge.warning { background: #fef3c7; color: #92400e; }
+        .notif-badge.success { background: #d1fae5; color: #065f46; }
+        .notif-badge.info { background: #dbeafe; color: #1e40af; }
+        .notif-action { background: #0f172a; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; flex-shrink: 0; transition: background 0.2s; }
+        .notif-action:hover { background: #10b981; }
+        .empty-state { text-align: center; padding: 60px; color: #94a3b8; }
+        .empty-state .icon { font-size: 80px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="notif-hero">
+                <h1>🔔 مركز إشعارات الفروع والمخزون</h1>
+                <p>مراقبة حية لأداء الفروع في الوقت الفعلي - مبيعات، ربحية، مخزون، ونشاط</p>
+                <div class="notif-hero-stats">
+                    <div><span class="lbl">📊 إجمالي الإشعارات</span><span class="val" id="hero-total">0</span></div>
+                    <div><span class="lbl">🔴 حرجة</span><span class="val" id="hero-critical" style="color:#fca5a5;">0</span></div>
+                    <div><span class="lbl">🟠 مهمة</span><span class="val" id="hero-warning" style="color:#fcd34d;">0</span></div>
+                    <div><span class="lbl">🟢 نجاح</span><span class="val" id="hero-success" style="color:#86efac;">0</span></div>
+                </div>
+            </div>
+            <div id="top-cards" class="branch-cards"></div>
+            <div class="charts-row">
+                <div class="chart-box">
+                    <h3>📊 مقارنة المبيعات الحية (كل الفروع)</h3>
+                    <div class="chart-wrapper"><canvas id="salesChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3>💎 مقارنة هامش الربح</h3>
+                    <div class="chart-wrapper"><canvas id="marginChart"></canvas></div>
+                </div>
+            </div>
+            <div class="notif-filters">
+                <button class="filter-btn active" onclick="filterNotifs('all', this)">📋 الكل</button>
+                <button class="filter-btn" onclick="filterNotifs('sales_ranking', this)">🏆 ترتيب المبيعات</button>
+                <button class="filter-btn" onclick="filterNotifs('profitability', this)">💎 الربحية</button>
+                <button class="filter-btn" onclick="filterNotifs('inventory', this)">📦 المخزون</button>
+                <button class="filter-btn" onclick="filterNotifs('activity', this)">⏰ النشاط</button>
+            </div>
+            <div class="notif-list" id="notif-list"></div>
+        </section>
+    </main>
+    <script src="/assets/js/branch-notifications.js?v=777777"></script>
+    <script>
+        Chart.defaults.font.family = "'Noto Naskh Arabic', sans-serif";
+        let allNotifications = [];
+        let currentFilter = 'all';
+        document.addEventListener('DOMContentLoaded', () => {
+            allNotifications = generateLiveNotifications();
+            renderStats();
+            renderTopCards();
+            renderCharts();
+            renderNotifications();
+        });
+        function renderStats() {
+            const c = allNotifications.filter(n => n.priority === 'critical').length;
+            const w = allNotifications.filter(n => n.priority === 'warning').length;
+            const s = allNotifications.filter(n => n.priority === 'success').length;
+            document.getElementById('hero-total').textContent = allNotifications.length;
+            document.getElementById('hero-critical').textContent = c;
+            document.getElementById('hero-warning').textContent = w;
+            document.getElementById('hero-success').textContent = s;
+        }
+        function getBranchStats() {
+            const branches = getCostCenters().filter(c => c.type === 'فرع');
+            const invoices = getInvoices();
+            const purchases = getPurchases();
+            return branches.map(b => {
+                const brInv = invoices.filter(i => i.branchName === b.name);
+                const brPur = purchases.filter(p => p.branchName === b.name);
+                const sales = brInv.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+                const pur = brPur.reduce((s, p) => s + (parseFloat(p.total) || 0), 0);
+                const profit = sales - pur;
+                const margin = sales > 0 ? (profit / sales) * 100 : 0;
+                return { name: b.name, sales, profit, margin };
+            });
+        }
+        function renderTopCards() {
+            const stats = getBranchStats();
+            if (stats.length === 0) {
+                document.getElementById('top-cards').innerHTML = '<div style="grid-column:1/-1;" class="empty-state"><div class="icon">🏢</div><h3>لا توجد فروع مسجلة</h3></div>';
+                return;
+            }
+            const sortedSales = [...stats].sort((a,b) => b.sales - a.sales);
+            const sortedProfit = [...stats].sort((a,b) => b.profit - a.profit);
+            const sortedMargin = [...stats].sort((a,b) => b.margin - a.margin);
+            document.getElementById('top-cards').innerHTML = `
+                <div class="b-card gold">
+                    <div class="title">🏆 الأكثر مبيعاً الآن</div>
+                    <div class="branch-name">${sortedSales[0].name}</div>
+                    <div class="value" style="color:#f59e0b;">${sortedSales[0].sales.toFixed(2)}</div>
+                    <div class="sub">ريال (تراكمي من كل الفواتير)</div>
+                </div>
+                <div class="b-card green">
+                    <div class="title">💎 الأكثر ربحية الآن</div>
+                    <div class="branch-name">${sortedProfit[0].name}</div>
+                    <div class="value" style="color:${sortedProfit[0].profit >= 0 ? '#10b981' : '#ef4444'};">${sortedProfit[0].profit.toFixed(2)}</div>
+                    <div class="sub">صافي ${sortedProfit[0].profit >= 0 ? 'ربح' : 'خسارة'} ريال</div>
+                </div>
+                <div class="b-card blue">
+                    <div class="title">📈 الأفضل هامش ربح</div>
+                    <div class="branch-name">${sortedMargin[0].name}</div>
+                    <div class="value" style="color:#3b82f6;">${sortedMargin[0].margin.toFixed(1)}%</div>
+                    <div class="sub">من مبيعات ${sortedMargin[0].sales.toFixed(2)}</div>
+                </div>
+            `;
+        }
+        function renderCharts() {
+            const stats = getBranchStats();
+            const labels = stats.map(s => s.name);
+            const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+            new Chart(document.getElementById('salesChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'المبيعات', data: stats.map(s => s.sales), backgroundColor: palette, borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+            new Chart(document.getElementById('marginChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'هامش الربح %', data: stats.map(s => s.margin), backgroundColor: stats.map(s => s.margin >= 0 ? 'rgba(16,185,129,0.8)' : 'rgba(239,68,68,0.8)'), borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+            });
+        }
+        function filterNotifs(type, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = type;
+            renderNotifications();
+        }
+        function renderNotifications() {
+            const list = document.getElementById('notif-list');
+            let filtered = allNotifications;
+            if (currentFilter !== 'all') filtered = allNotifications.filter(n => n.type === currentFilter);
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="icon">✅</div><h3 style="color:#10b981;">لا توجد إشعارات حالياً</h3><p>كل شيء يعمل بشكل طبيعي.</p></div>';
+                return;
+            }
+            const order = { critical: 1, warning: 2, success: 3, info: 4 };
+            filtered.sort((a, b) => (order[a.priority] || 99) - (order[b.priority] || 99));
+            list.innerHTML = filtered.map(n => `
+                <div class="notif-item ${n.priority}">
+                    <div class="notif-icon">${n.icon}</div>
+                    <div class="notif-content">
+                        <div class="notif-title">${n.title}</div>
+                        <div class="notif-message">${n.message}</div>
+                    </div>
+                    <span class="notif-badge ${n.priority}">${n.priority === 'critical' ? 'حرج' : n.priority === 'warning' ? 'مهم' : n.priority === 'success' ? 'نجاح' : 'معلومة'}</span>
+                    ${n.action ? `<a href="${n.action}" class="notif-action">${n.actionLabel || 'عرض'}</a>` : ''}
+                </div>
+            `).join('');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

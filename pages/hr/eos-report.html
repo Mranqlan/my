@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><title>EOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic&display=swap" rel="stylesheet">
+<style>
+*{font-family:Cairo,sans-serif}
+body{background:#f8fafc;margin:0;margin-right:260px;padding:20px;color:#1e293b}
+h1{background:#0f172a;color:#fff;padding:20px;border-radius:12px;margin:0 0 20px}
+.bar{background:#fff;padding:12px;border-radius:8px;margin-bottom:16px;display:flex;gap:10px;align-items:center}
+input,button{padding:6px 12px;border:1px solid #ddd;border-radius:6px;font-family:Cairo,sans-serif}
+button{background:#10b981;color:#fff;border:0;cursor:pointer;font-weight:700}
+button.sec{background:#1e293b}
+table{width:100%;border-collapse:collapse;background:#fff}
+th{background:#0f172a;color:#fff;padding:10px;font-size:13px;text-align:right}
+td{padding:8px;border-bottom:1px solid #eee;font-size:13px}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+<h1>💰 مكافأة نهاية الخدمة</h1>
+<div class="bar">
+<input type="date" id="d">
+<button class="sec" onclick="load()">تحديث</button>
+<button onclick="post()">ترحيل</button>
+</div>
+<table><thead><tr><th>الموظف</th><th>تعيين</th><th>سنوات</th><th>الأساسي</th><th>المكافأة</th><th>شهري</th></tr></thead><tbody id="tb"></tbody></table>
+<script>
+document.getElementById('d').value=new Date().toISOString().split('T')[0];
+function load(){
+const d=document.getElementById('d').value||new Date();
+const es=JSON.parse(localStorage.getItem('employees')||'[]').filter(e=>e.status!=='terminated');
+document.getElementById('tb').innerHTML=es.map(e=>{
+const r=calculateEOS(e,d),m=calculateMonthlyEOSAccrual(e);
+return `<tr><td>${e.name||'-'}</td><td>${e.hireDate||'-'}</td><td>${r.years}</td><td>${r.basicSalary.toLocaleString()}</td><td style="color:#10b981;font-weight:700">${r.amount.toLocaleString()}</td><td>${m.toLocaleString()}</td></tr>`;
+}).join('');
+}
+function post(){
+const n=new Date();
+const f=window.postJournalEntry||window.addJournalEntry||window.saveJournalEntry;
+if(!f){alert('⚠️ دالة الترحيل غير موجودة');return}
+const r=postEOSAccrualEntries(n.getMonth()+1,n.getFullYear(),f);
+alert(r.success?'✅ تم ترحيل '+r.posted:'⚠️ '+r.error);
+}
+document.addEventListener('DOMContentLoaded',load);
+</script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+    <script src="/assets/js/hr-extended.js?v=777777"></script>
+</body>
+</html>

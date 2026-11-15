@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تحويل المخزون</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>تحويل المخزون بين المستودعات (Stock Transfer)</h2>
+            </div>
+            <div class="entry-form-container" style="max-width: 800px; margin: 0 auto; margin-bottom: 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group"><label>من مستودع</label><select id="tr-from" onchange="loadItems()"></select></div>
+                    <div class="form-group"><label>إلى مستودع</label><select id="tr-to"></select></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group"><label>الصنف</label><select id="tr-item"></select></div>
+                    <div class="form-group"><label>الكمية المتاحة</label><input type="text" id="tr-avail" readonly style="background:#f8fafc; text-align:center;"></div>
+                    <div class="form-group"><label>الكمية المحولة</label><input type="text" inputmode="decimal" id="tr-qty" value="1" oninput="checkQty()"></div>
+                </div>
+                <button class="btn btn-success" style="width: 100%; padding: 15px; font-size: 18px;" onclick="executeTransfer()">تنفيذ التحويل</button>
+            </div>
+            <div class="table-container">
+                <h3>سجل التحويلات</h3>
+                <table class="data-table">
+                    <thead><tr><th>التاريخ</th><th>الصنف</th><th>من</th><th>إلى</th><th>الكمية</th></tr></thead>
+                    <tbody id="tr-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const whs = getWarehouses();
+            const fromSelect = document.getElementById('tr-from');
+            const toSelect = document.getElementById('tr-to');
+            whs.forEach(w => {
+                fromSelect.innerHTML += `<option value="${w.id}" data-name="${w.name}">${w.name}</option>`;
+                toSelect.innerHTML += `<option value="${w.id}" data-name="${w.name}">${w.name}</option>`;
+            });
+            loadItems();
+            renderTransfers();
+        });
+        function loadItems() {
+            const whId = parseInt(document.getElementById('tr-from').value);
+            const select = document.getElementById('tr-item');
+            select.innerHTML = '<option value="">-- اختر الصنف --</option>';
+            getItems().filter(i => i.warehouseId === whId && i.qty > 0).forEach(i => {
+                select.innerHTML += `<option value="${i.id}" data-qty="${i.qty}" data-name="${i.name}">${i.name}</option>`;
+            });
+            select.onchange = () => {
+                const opt = select.options[select.selectedIndex];
+                document.getElementById('tr-avail').value = opt.getAttribute('data-qty') || 0;
+            };
+            document.getElementById('tr-avail').value = '';
+        }
+        function checkQty() {
+            const avail = parseFloat(document.getElementById('tr-avail').value) || 0;
+            const qty = parseFloat(document.getElementById('tr-qty').value) || 0;
+            if (qty > avail) alert('الكمية المحولة أكبر من المتاحة!');
+        }
+        function executeTransfer() {
+            const fromId = parseInt(document.getElementById('tr-from').value);
+            const toId = parseInt(document.getElementById('tr-to').value);
+            if (fromId === toId) return alert('لا يمكن التحويل لنفس المستودع!');
+            const itemSelect = document.getElementById('tr-item');
+            const itemId = parseInt(itemSelect.value);
+            if (!itemId) return alert('اختر الصنف.');
+            const qty = parseFloat(document.getElementById('tr-qty').value) || 0;
+            const avail = parseFloat(document.getElementById('tr-avail').value) || 0;
+            if (qty <= 0 || qty > avail) return alert('كمية غير صحيحة.');
+            const itemName = itemSelect.options[itemSelect.selectedIndex].getAttribute('data-name');
+            const fromName = document.getElementById('tr-from').options[document.getElementById('tr-from').selectedIndex].getAttribute('data-name');
+            const toName = document.getElementById('tr-to').options[document.getElementById('tr-to').selectedIndex].getAttribute('data-name');
+            let items = getItems();
+            // خصم من المصدر
+            let fromIdx = items.findIndex(i => i.id === itemId);
+            items[fromIdx].qty -= qty;
+            // إضافة للوجهة
+            let toIdx = items.findIndex(i => i.name === itemName && i.warehouseId === toId);
+            if (toIdx !== -1) {
+                items[toIdx].qty += qty;
+            } else {
+                items.push({ ...items[fromIdx], id: Date.now(), qty: qty, warehouseId: toId, warehouseName: toName });
+            }
+            saveItems(items);
+            const transfers = getStockTransfers();
+            transfers.push({ id: Date.now(), date: new Date().toISOString().split('T')[0], itemName, fromName, toName, qty });
+            saveStockTransfers(transfers);
+            alert('تم التحويل بنجاح!');
+            renderTransfers();
+            loadItems();
+        }
+        function renderTransfers() {
+            const tbody = document.getElementById('tr-body');
+            tbody.innerHTML = '';
+            getStockTransfers().reverse().forEach(t => {
+                tbody.innerHTML += `<tr><td>${t.date}</td><td>${t.itemName}</td><td>${t.fromName}</td><td>${t.toName}</td><td style="font-weight:bold; color:var(--primary-color)">${t.qty}</td></tr>`;
+            });
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

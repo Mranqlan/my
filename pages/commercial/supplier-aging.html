@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير أعمار ديون الموردين</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        @media print {
+            .sidebar, .top-header, .page-header, .header-actions, .no-print {
+                display: none !important;
+            }
+            body, .main-wrapper, .content-area {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: white !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            .table-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .data-table th, .data-table td {
+                border: 1px solid #000 !important;
+                padding: 10px !important;
+                color: #000 !important;
+            }
+            .data-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+            }
+            .text-success { color: #000 !important; font-weight: bold; }
+            .text-danger { color: #000 !important; font-weight: bold; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header no-print">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header no-print">
+                <h2>تقرير أعمار ديون الموردين (AP Aging)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة التقرير</button>
+                    <button class="btn btn-primary" onclick="generateAgingReport()">تحديث البيانات 🔄</button>
+                </div>
+            </div>
+            <div id="print-area" class="table-container">
+                <div class="report-header" style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 20px;">
+                    <!-- هنا تم وضع الكلاس مباشرة لإجبار النظام على قراءته -->
+                    <h1 style="color: #1e293b; margin: 0; font-size: 28px;"><span class="dynamic-company-name">شركة AL SHAMEL للمحاسبة</span></h1>
+                    <h3 style="color: #64748b; margin: 5px 0;">تقرير أعمار ديون الموردين</h3>
+                    <p style="margin-top: 10px; font-weight: 700;">كما في تاريخ: <span id="report-date"></span></p>
+                </div>
+                <table class="data-table trial-balance-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th width="20%">اسم المورد</th>
+                            <th width="16%" style="color: #10b981;">0 - 30 يوم</th>
+                            <th width="16%" style="color: #3b82f6;">31 - 60 يوم</th>
+                            <th width="16%" style="color: #f59e0b;">61 - 90 يوم</th>
+                            <th width="16%" style="color: #ef4444;">أكثر من 90 يوم</th>
+                            <th width="16%">الإجمالي المستحق</th>
+                        </tr>
+                    </thead>
+                    <tbody id="aging-body"></tbody>
+                    <tfoot>
+                        <tr class="totals-row" style="background-color: #e2e8f0; font-weight: bold;">
+                            <td>الإجماليات</td>
+                            <td id="total-0-30">0.00</td>
+                            <td id="total-31-60">0.00</td>
+                            <td id="total-61-90">0.00</td>
+                            <td id="total-90-plus">0.00</td>
+                            <td id="total-overall">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- استدعاء سكريبت الإعدادات -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            document.getElementById('report-date').textContent = today.toLocaleDateString('ar-EG');
+            generateAgingReport();
+        });
+        function generateAgingReport() {
+            const purchases = getPurchases();
+            const returns = getPurchaseReturns(); 
+            const today = new Date();
+            let suppliersData = {};
+            purchases.forEach(inv => {
+                const invDate = new Date(inv.date);
+                const diffTime = Math.abs(today - invDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let invoiceReturns = returns ? returns.filter(r => r.invoiceId === inv.id) : [];
+                let totalReturns = invoiceReturns.reduce((sum, r) => sum + r.total, 0);
+                let netAmount = inv.total - totalReturns;
+                if (netAmount <= 0) return;
+                if (!suppliersData[inv.supplierName]) {
+                    suppliersData[inv.supplierName] = { current: 0, d30: 0, d60: 0, d90: 0, total: 0 };
+                }
+                if (diffDays <= 30) suppliersData[inv.supplierName].current += netAmount;
+                else if (diffDays <= 60) suppliersData[inv.supplierName].d30 += netAmount;
+                else if (diffDays <= 90) suppliersData[inv.supplierName].d60 += netAmount;
+                else suppliersData[inv.supplierName].d90 += netAmount;
+                suppliersData[inv.supplierName].total += netAmount;
+            });
+            renderAgingTable(suppliersData);
+        }
+        function renderAgingTable(data) {
+            const tbody = document.getElementById('aging-body');
+            tbody.innerHTML = '';
+            let grandTotals = { current: 0, d30: 0, d60: 0, d90: 0, total: 0 };
+            let hasData = false;
+            for (const [supplierName, amounts] of Object.entries(data)) {
+                hasData = true;
+                grandTotals.current += amounts.current; grandTotals.d30 += amounts.d30; grandTotals.d60 += amounts.d60; grandTotals.d90 += amounts.d90; grandTotals.total += amounts.total;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align: right; font-weight: bold;">${supplierName}</td>
+                        <td class="text-success">${amounts.current > 0 ? amounts.current.toFixed(2) : '-'}</td>
+                        <td style="color: #3b82f6; font-weight: bold;">${amounts.d30 > 0 ? amounts.d30.toFixed(2) : '-'}</td>
+                        <td style="color: #f59e0b; font-weight: bold;">${amounts.d60 > 0 ? amounts.d60.toFixed(2) : '-'}</td>
+                        <td class="text-danger">${amounts.d90 > 0 ? amounts.d90.toFixed(2) : '-'}</td>
+                        <td style="font-weight: bold; background-color: #f8fafc;">${amounts.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+            if (!hasData) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 30px;">لا توجد ديون مستحقة للموردين حالياً.</td></tr>';
+            }
+            document.getElementById('total-0-30').textContent = grandTotals.current.toFixed(2);
+            document.getElementById('total-31-60').textContent = grandTotals.d30.toFixed(2);
+            document.getElementById('total-61-90').textContent = grandTotals.d60.toFixed(2);
+            document.getElementById('total-90-plus').textContent = grandTotals.d90.toFixed(2);
+            document.getElementById('total-overall').textContent = grandTotals.total.toFixed(2);
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

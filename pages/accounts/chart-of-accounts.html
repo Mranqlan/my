@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دليل شجرة الحسابات</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile">
+                <span>OMRAN AQLAN</span>
+                <div class="avatar"></div>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="بحث في النظام المحاسبي...">
+            </div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>دليل شجرة الحسابات (Chart of Accounts)</h2>
+                <div class="header-actions">
+                    <input type="text" id="search-account" class="search-input" placeholder="ابحث برقم أو اسم الحساب..." onkeyup="filterAccounts()">
+                    <button class="btn btn-primary" onclick="openAccountModal()">+ إضافة حساب جديد</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table tree-table" id="accounts-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">رقم الحساب</th>
+                            <th width="40%">اسم الحساب</th>
+                            <th width="20%">نوع الحساب</th>
+                            <th width="15%">الرصيد (تجريبي)</th>
+                            <th width="10%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accounts-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة حساب جديد (Modal) -->
+    <div class="modal-overlay" id="account-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة حساب جديد لشجرة الحسابات</h3>
+                <button class="close-btn" onclick="closeAccountModal()">×</button>
+            </div>
+            <form id="add-account-form" onsubmit="saveNewAccount(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>رقم الحساب</label>
+                            <input type="text" id="new-acc-code" required placeholder="مثال: 1104">
+                        </div>
+                        <div class="form-group">
+                            <label>اسم الحساب</label>
+                            <input type="text" id="new-acc-name" required placeholder="مثال: سيارات">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع الحساب</label>
+                            <select id="new-acc-type" required>
+                                <option value="أصول">أصول</option>
+                                <option value="خصوم">خصوم</option>
+                                <option value="حقوق ملكية">حقوق ملكية</option>
+                                <option value="إيرادات">إيرادات</option>
+                                <option value="مصروفات">مصروفات</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الحساب الأب (التابع له)</label>
+                            <select id="new-acc-parent" required>
+                                <!-- سيتم تعبئته بالجافاسكريبت -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAccountModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ الحساب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/assets/js/accounts.js?v=777777"></script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إنشاء فاتورة مبيعات | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/sidebar.css?v=555555">
+    <style>
+        .top-row-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr !important; /* 5 أعمدة */
+            gap: 12px !important;
+            margin-bottom: 20px !important;
+        }
+        @media (max-width: 1400px) {
+            .top-row-grid { grid-template-columns: 1fr 1fr 1fr !important; }
+        }
+        .currency-info-box {
+            display: none;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #1e40af;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إنشاء فاتورة مبيعات (Sales Invoice)</h2>
+                <a href="invoices-list.html" class="btn btn-secondary">سجل الفواتير</a>
+            </div>
+            <div class="entry-form-container">
+                <!-- صف البيانات العلوي (5 حقول) -->
+                <div class="top-row-grid">
+                    <div class="form-group">
+                        <label>العميل</label>
+                        <select id="invoice-customer" required><option value="">-- اختر العميل --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ الفاتورة</label>
+                        <input type="date" id="invoice-date">
+                    </div>
+                    <div class="form-group">
+                        <label>الفرع / القسم</label>
+                        <select id="invoice-branch" required><option value="">-- اختر الفرع --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>المستودع</label>
+                        <select id="invoice-warehouse" onchange="refreshItemDropdowns()" required><option value="">-- اختر --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>العملة</label>
+                        <select id="invoice-currency" onchange="updateCurrencyInfo()" required><option value="">-- اختر --</option></select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="invoice-items-table">
+                        <thead>
+                            <tr>
+                                <th width="40%">الصنف</th>
+                                <th width="15%">الكمية المتوفرة</th>
+                                <th width="15%">الكمية المطلوبة</th>
+                                <th width="15%">سعر البيع</th>
+                                <th width="15%">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-items-body"></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-accent" onclick="addInvoiceRow()" style="margin-top: 10px;">+ إضافة صنف</button>
+                <!-- شريط معلومات العملة -->
+                <div id="currency-info-box" class="currency-info-box"></div>
+                <!-- الإجماليات -->
+                <div class="totals-section" style="flex-direction: column; gap: 10px; background: #f8fafc; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <span>إجمالي البيع (بدون ضريبة):</span>
+                        <strong id="subtotal" style="font-family: monospace;">0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <span>الضريبة (%): <input type="text" id="vat-rate" value="15" oninput="calcTotal()" style="width: 60px; padding: 6px; border-radius: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;"></span>
+                        <strong id="vat-amount" style="font-family: monospace;">0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; width: 100%; border-top: 2px solid #cbd5e1; padding-top: 10px; margin-top: 5px;">
+                        <span style="font-weight: bold; color: var(--primary-color);">الإجمالي النهائي:</span>
+                        <strong id="invoice-total" style="font-size: 22px; color: var(--primary-color); font-family: monospace;">0.00</strong>
+                    </div>
+                </div>
+                <button class="btn btn-success" style="margin-top: 15px; font-size: 18px; padding: 15px; width: 100%;" onclick="saveInvoice()">حفظ الفاتورة وتوليد القيد</button>
+            </div>
+        </section>
+    </main>
+    <script src="/assets/js/sales-invoices.js?v=777777"></script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

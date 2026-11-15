@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>النقدية البسيطة (العهدة)</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إدارة النقدية البسيطة (Petty Cash)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-success" onclick="openFeedModal()">+ تغذية العهدة</button>
+                    <button class="btn btn-danger" onclick="openExpenseModal()">- تسجيل مصروف</button>
+                </div>
+            </div>
+            <div class="kpi-card border-blue" style="margin-bottom: 25px; max-width: 400px;">
+                <div class="kpi-icon">💵</div>
+                <div class="kpi-info"><span>الرصيد الحالي للعهدة</span><h3 id="pc-balance">0.00</h3></div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead><tr><th>التاريخ</th><th>البيان</th><th>النوع</th><th>المبلغ</th></tr></thead>
+                    <tbody id="pc-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="feed-modal">
+        <div class="modal-content" style="width:400px;">
+            <div class="modal-header"><h3>تغذية العهدة من البنك</h3><button class="close-btn" onclick="closeModal('feed-modal')">×</button></div>
+            <form onsubmit="feedCash(event)">
+                <div class="modal-body">
+                    <div class="form-group"><label>المبلغ</label><input type="text" id="f-amount" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">تنفيذ</button></div>
+            </form>
+        </div>
+    </div>
+    <div class="modal-overlay" id="expense-modal">
+        <div class="modal-content" style="width:500px;">
+            <div class="modal-header"><h3>تسجيل مصروف نثري</h3><button class="close-btn" onclick="closeModal('expense-modal')">×</button></div>
+            <form onsubmit="saveExpense(event)">
+                <div class="modal-body">
+                    <div class="form-group"><label>حساب المصروف</label><select id="e-acc"></select></div>
+                    <div class="form-group" style="margin-top:10px;"><label>المبلغ</label><input type="text" id="e-amount" required></div>
+                    <div class="form-group" style="margin-top:10px;"><label>البيان</label><input type="text" id="e-desc" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">حفظ</button></div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', renderPettyCash);
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function renderPettyCash() {
+            const pc = getPettyCash();
+            document.getElementById('pc-balance').textContent = pc.balance.toFixed(2);
+            const tbody = document.getElementById('pc-body');
+            tbody.innerHTML = '';
+            pc.transactions.reverse().forEach(t => {
+                let typeBadge = t.type === 'feed' ? '<span style="color:green; font-weight:bold;">إيداع</span>' : '<span style="color:red; font-weight:bold;">مصروف</span>';
+                tbody.innerHTML += `<tr><td>${t.date}</td><td style="text-align:right">${t.desc}</td><td>${typeBadge}</td><td style="font-family:monospace">${t.amount.toFixed(2)}</td></tr>`;
+            });
+        }
+        function openFeedModal() { document.getElementById('feed-modal').style.display = 'flex'; }
+        function openExpenseModal() {
+            document.getElementById('expense-modal').style.display = 'flex';
+            const select = document.getElementById('e-acc');
+            select.innerHTML = '';
+            getAccounts().forEach(a => { if(a.type === 'مصروفات' && a.level === 2) select.innerHTML += `<option value="${a.code}" data-name="${a.name}">${a.name}</option>`; });
+        }
+        function feedCash(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('f-amount').value) || 0;
+            if (amount <= 0) return;
+            let pc = getPettyCash();
+            pc.balance += amount;
+            pc.transactions.push({ date: new Date().toISOString().split('T')[0], desc: 'تغذية العهدة من البنك', type: 'feed', amount });
+            savePettyCash(pc);
+            // قيد محاسبي: مدين عهدة / دائن بنك
+            const entries = getEntries();
+            const entryNum = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(), entryNumber: entryNum, date: new Date().toISOString().split('T')[0], description: 'تغذية النقدية البسيطة',
+                lines: [ { accountCode: "1101", accountName: "الصندوق", debit: amount, credit: 0 }, { accountCode: "1102", accountName: "البنك", debit: 0, credit: amount } ],
+                totalDebit: amount, totalCredit: amount
+            });
+            saveEntries(entries);
+            closeModal('feed-modal');
+            renderPettyCash();
+            alert('تم تغذية العهدة بنجاح!');
+        }
+        function saveExpense(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('e-amount').value) || 0;
+            const desc = document.getElementById('e-desc').value;
+            const accSelect = document.getElementById('e-acc');
+            const accCode = accSelect.value;
+            const accName = accSelect.options[accSelect.selectedIndex].getAttribute('data-name');
+            let pc = getPettyCash();
+            if (amount > pc.balance) return alert('رصيد العهدة لا يكفي!');
+            pc.balance -= amount;
+            pc.transactions.push({ date: new Date().toISOString().split('T')[0], desc, type: 'expense', amount });
+            savePettyCash(pc);
+            // قيد محاسبي: مدين مصروف / دائن صندوق
+            const entries = getEntries();
+            const entryNum = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(), entryNumber: entryNum, date: new Date().toISOString().split('T')[0], description: `مصروف نثري: ${desc}`,
+                lines: [ { accountCode: accCode, accountName: accName, debit: amount, credit: 0 }, { accountCode: "1101", accountName: "الصندوق", debit: 0, credit: amount } ],
+                totalDebit: amount, totalCredit: amount
+            });
+            saveEntries(entries);
+            closeModal('expense-modal');
+            renderPettyCash();
+            alert('تم تسجيل المصروف بنجاح!');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

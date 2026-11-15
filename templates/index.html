@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101d35">
+  <title>AL SHAMEL — لوحة التحكم</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js?v=777777"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
+      <a class="brand" href="#" aria-label="AL SHAMEL">
+        <span class="brand-mark">O</span>
+        <span class="brand-name">ONYX <b>PRO</b></span>
+      </a>
+      <p class="nav-caption" data-i18n="mainMenu">القائمة الرئيسية</p>
+      <nav class="nav-list">
+        <a class="nav-item active" href="#" aria-current="page">
+          <i data-lucide="layout-dashboard"></i>
+          <span data-i18n="dashboard">الرئيسية</span>
+        </a>
+        <a class="nav-item" href="#">
+          <i data-lucide="receipt"></i>
+          <span data-i18n="sales">المبيعات</span>
+        </a>
+        <a class="nav-item" href="#">
+          <i data-lucide="shopping-cart"></i>
+          <span data-i18n="purchases">المشتريات</span>
+        </a>
+        <a class="nav-item" href="#">
+          <i data-lucide="boxes"></i>
+          <span data-i18n="inventory">المخزون</span>
+        </a>
+        <a class="nav-item" href="#">
+          <i data-lucide="wallet"></i>
+          <span data-i18n="accounting">الحسابات</span>
+        </a>
+        <a class="nav-item" href="#">
+          <i data-lucide="chart-no-axes-combined"></i>
+          <span data-i18n="reports">التقارير</span>
+        </a>
+        <a class="nav-item" href="#">
+          <i data-lucide="settings"></i>
+          <span data-i18n="settings">الإعدادات</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="online-dot"></span>
+        <span data-i18n="systemOnline">النظام يعمل بشكل طبيعي</span>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" id="menuToggle"
+                aria-label="فتح القائمة" aria-expanded="false">
+          <i data-lucide="menu"></i>
+        </button>
+        <label class="search-box">
+          <i data-lucide="search"></i>
+          <input id="searchInput" type="search"
+                 data-i18n-placeholder="searchPlaceholder"
+                 placeholder="ابحث عن عملية أو عميل">
+          <kbd>/</kbd>
+        </label>
+        <div class="topbar-actions">
+          <label class="branch-select">
+            <i data-lucide="map-pin"></i>
+            <select aria-label="اختيار الفرع">
+              <option data-i18n="mainBranch">الفرع الرئيسي</option>
+              <option data-i18n="riyadhBranch">فرع الرياض</option>
+            </select>
+          </label>
+          <button class="icon-button" id="languageToggle" aria-label="Change language">
+            <span>EN</span>
+          </button>
+          <button class="icon-button" id="themeToggle" aria-label="تغيير المظهر">
+            <i data-lucide="moon"></i>
+          </button>
+          <button class="icon-button notification-button"
+                  aria-label="الإشعارات" id="notificationButton">
+            <i data-lucide="bell"></i>
+            <span class="notification-dot"></span>
+          </button>
+          <div class="user-profile">
+            <div class="avatar" aria-hidden="true">م</div>
+            <div class="user-copy">
+              <strong data-i18n="userName">محمد أحمد</strong>
+              <small data-i18n="userRole">مدير النظام</small>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="content">
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow" id="todayLabel">—</p>
+            <h1><span data-i18n="welcome">مرحبًا، محمد</span> <span aria-hidden="true">👋</span></h1>
+            <p class="muted" data-i18n="welcomeSubtitle">إليك ملخص أداء منشأتك.</p>
+          </div>
+          <div class="quick-actions">
+            <button class="button button-primary" data-toast="newInvoice">
+              <i data-lucide="plus"></i><span data-i18n="newInvoice">فاتورة جديدة</span>
+            </button>
+            <button class="button button-secondary" data-toast="newReceipt">
+              <i data-lucide="circle-plus"></i><span data-i18n="newReceipt">سند قبض</span>
+            </button>
+          </div>
+        </section>
+        <section class="section-toolbar">
+          <div>
+            <h2 data-i18n="overview">نظرة عامة</h2>
+            <p class="muted" data-i18n="overviewSubtitle">مؤشرات الأداء الرئيسية</p>
+          </div>
+          <select id="periodSelect" aria-label="الفترة الزمنية">
+            <option value="6" data-i18n="lastSixMonths">آخر 6 أشهر</option>
+            <option value="1" data-i18n="thisMonth">هذا الشهر</option>
+          </select>
+        </section>
+        <section class="stats-grid" aria-label="المؤشرات الرئيسية">
+          <article class="card stat-card">
+            <div class="stat-heading">
+              <span data-i18n="totalSales">إجمالي المبيعات</span>
+              <span class="stat-icon teal"><i data-lucide="trending-up"></i></span>
+            </div>
+            <strong class="stat-value" id="sales">—</strong>
+            <small class="trend positive"><span>↑ 12.8%</span> <span data-i18n="vsPrevious">مقارنة بالفترة السابقة</span></small>
+          </article>
+          <article class="card stat-card">
+            <div class="stat-heading">
+              <span data-i18n="totalPurchases">إجمالي المشتريات</span>
+              <span class="stat-icon blue"><i data-lucide="shopping-bag"></i></span>
+            </div>
+            <strong class="stat-value" id="purchases">—</strong>
+            <small class="trend positive"><span>↑ 4.3%</span> <span data-i18n="vsPrevious">مقارنة بالفترة السابقة</span></small>
+          </article>
+          <article class="card stat-card">
+            <div class="stat-heading">
+              <span data-i18n="receivables">المبالغ المستحقة</span>
+              <span class="stat-icon orange"><i data-lucide="clock-3"></i></span>
+            </div>
+            <strong class="stat-value" id="receivables">—</strong>
+            <small class="trend negative"><span>↓ 2.1%</span> <span data-i18n="vsPrevious">مقارنة بالفترة السابقة</span></small>
+          </article>
+          <article class="card stat-card">
+            <div class="stat-heading">
+              <span data-i18n="productsInStock">المنتجات في المخزون</span>
+              <span class="stat-icon purple"><i data-lucide="package"></i></span>
+            </div>
+            <strong class="stat-value" id="products">—</strong>
+            <small class="muted" data-i18n="activeProducts">منتج نشط</small>
+          </article>
+        </section>
+        <section class="dashboard-grid">
+          <article class="card chart-card">
+            <div class="card-heading">
+              <div>
+                <h2 data-i18n="incomeExpenses">الإيرادات والمصروفات</h2>
+                <p class="muted" data-i18n="performanceByMonth">الأداء خلال الأشهر الماضية</p>
+              </div>
+              <button class="text-button" id="exportChart">
+                <i data-lucide="download"></i><span data-i18n="exportChart">تصدير الرسم</span>
+              </button>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="performanceChart" aria-label="رسم الإيرادات والمصروفات"></canvas>
+            </div>
+          </article>
+          <article class="card alerts-card">
+            <div class="card-heading">
+              <div>
+                <h2 data-i18n="alerts">التنبيهات</h2>
+                <p class="muted" data-i18n="needsAttention">أمور تحتاج إلى متابعة</p>
+              </div>
+              <span class="alert-count">2</span>
+            </div>
+            <a class="alert-row" href="#" data-toast="overdue">
+              <span class="alert-symbol orange"><i data-lucide="receipt-text"></i></span>
+              <span class="alert-copy">
+                <strong data-i18n="overdueInvoices">فواتير مستحقة</strong>
+                <small data-i18n="overdueDetails">هناك 5 فواتير تحتاج إلى متابعة</small>
+              </span>
+              <i data-lucide="chevron-left"></i>
+            </a>
+            <a class="alert-row" href="#" data-toast="lowStock">
+              <span class="alert-symbol blue"><i data-lucide="package-search"></i></span>
+              <span class="alert-copy">
+                <strong data-i18n="lowStock">مخزون منخفض</strong>
+                <small data-i18n="lowStockDetails">3 منتجات وصلت إلى حد إعادة الطلب</small>
+              </span>
+              <i data-lucide="chevron-left"></i>
+            </a>
+            <div class="workflow">
+              <span class="workflow-icon"><i data-lucide="clipboard-check"></i></span>
+              <div>
+                <strong data-i18n="approvalRequired">موافقة مطلوبة</strong>
+                <small data-i18n="purchaseWaiting">طلب شراء بانتظار المراجعة</small>
+              </div>
+              <button class="review-button" data-toast="review" data-i18n="review">مراجعة</button>
+            </div>
+          </article>
+        </section>
+        <section class="card transactions-card">
+          <div class="card-heading">
+            <div>
+              <h2 data-i18n="recentTransactions">أحدث المعاملات</h2>
+              <p class="muted" data-i18n="recentTransactionsSubtitle">آخر العمليات المسجلة في النظام</p>
+            </div>
+            <button class="text-button" data-toast="viewAll">
+              <span data-i18n="viewAll">عرض الكل</span><i data-lucide="arrow-left"></i>
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="transactionId">رقم العملية</th>
+                  <th data-i18n="customerSupplier">العميل / المورد</th>
+                  <th data-i18n="date">التاريخ</th>
+                  <th data-i18n="amount">المبلغ</th>
+                  <th data-i18n="status">الحالة</th>
+                  <th><span class="visually-hidden" data-i18n="actions">الإجراءات</span></th>
+                </tr>
+              </thead>
+              <tbody id="transactionsBody">
+                <tr><td colspan="6" class="loading-cell" data-i18n="loading">جارٍ تحميل البيانات...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <footer class="page-footer">AL SHAMEL <span>•</span> <span data-i18n="prototype">نموذج أولي</span></footer>
+      </div>
+    </main>
+  </div>
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

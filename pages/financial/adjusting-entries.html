@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>التسويات الجردية والإغلاق</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile">
+                <span>OMRAN AQLAN</span>
+                <div class="avatar"></div>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="بحث في النظام المحاسبي...">
+            </div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>التسويات الجردية وإغلاق السنة المالية</h2>
+            </div>
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                <!-- قسم التسويات الجردية -->
+                <div class="chart-container" style="height: auto; padding-bottom: 30px;">
+                    <h3>1. إدخال قيد تسوية جردية</h3>
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">استخدم هذا القسم لإدخال قيود الإهلاك، المصروفات المستحقة، أو الإيرادات المقدمة.</p>
+                    <div class="form-group">
+                        <label>البيان (الشرح)</label>
+                        <input type="text" id="adj-desc" placeholder="مثال: إهلاك الأثاث للعام الحالي...">
+                    </div>
+                    <div class="form-row" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <label>الحساب المدين (Dr)</label>
+                            <select id="adj-debit"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>الحساب الدائن (Cr)</label>
+                            <select id="adj-credit"></select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>المبلغ</label>
+                        <input type="number" id="adj-amount" value="0.00" step="0.01">
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="saveAdjustingEntry()">حفظ قيد التسوية</button>
+                </div>
+                <!-- قسم الإغلاق -->
+                <div class="chart-container" style="height: auto; background-color: #fef2f2; border: 1px solid #fecaca;">
+                    <h3 style="color: #b91c1c; border-bottom-color: #fecaca;">2. إغلاق السنة المالية (Closing)</h3>
+                    <p style="font-size: 13px; color: #7f1d1d; margin-bottom: 15px; line-height: 1.6;">
+                        <strong>تنبيه هام:</strong> عند الضغط على الزر أدناه، سيقوم النظام تلقائياً بإنشاء قيد يومية لتصفير جميع حسابات الإيرادات والمصروفات، ونقل صافي الربح (أو الخسارة) إلى حساب "الأرباح المحتجزة". <br>
+                        لا تقم بهذه العملية إلا في نهاية العام المالي وبعد التأكد من جميع القيود.
+                    </p>
+                    <button class="btn btn-success" style="width: 100%; background-color: #ef4444; margin-top: 50px;" onclick="performClosing()">تنفيذ قيود الإغلاق السنوية</button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="/assets/js/adjusting-entries.js?v=777777"></script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

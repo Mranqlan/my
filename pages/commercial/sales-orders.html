@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>أوامر البيع</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>أوامر البيع (Sales Orders)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openSOModal()">+ إضافة أمر بيع جديد</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">رقم الأمر</th>
+                            <th width="15%">التاريخ</th>
+                            <th width="25%">العميل</th>
+                            <th width="15%">الإجمالي المتوقع</th>
+                            <th width="15%">الحالة</th>
+                            <th width="15%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="so-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="so-modal">
+        <div class="modal-content" style="width: 800px;">
+            <div class="modal-header">
+                <h3>إنشاء أمر بيع جديد</h3>
+                <button class="close-btn" onclick="closeSOModal()">×</button>
+            </div>
+            <form id="so-form" onsubmit="saveSO(event)">
+                <div class="modal-body">
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>العميل</label>
+                            <select id="so-customer" required><option value="">-- اختر العميل --</option></select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>تاريخ الأمر</label>
+                            <input type="date" id="so-date" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>الفرع / القسم</label>
+                            <select id="so-branch" required><option value="">-- اختر الفرع --</option></select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th width="50%">الصنف</th>
+                                    <th width="20%">الكمية</th>
+                                    <th width="20%">سعر البيع</th>
+                                    <th width="10%">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="so-items-body"></tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 10px;" onclick="addSORow()">+ إضافة صنف</button>
+                    <div class="totals-section" style="margin-top: 15px; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 8px;">
+                        <span style="font-weight: bold;">إجمالي أمر البيع:</span>
+                        <strong id="so-total" style="font-size: 20px; color: var(--primary-color); font-family: monospace;">0.00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeSOModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ أمر البيع</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('so-date').valueAsDate = new Date();
+            renderSOs();
+        });
+        function renderSOs() {
+            const tbody = document.getElementById('so-body');
+            const sos = getSalesOrders();
+            tbody.innerHTML = '';
+            if (sos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #64748b;">لا توجد أوامر بيع مسجلة.</td></tr>';
+                return;
+            }
+            sos.reverse().forEach(so => {
+                let statusBadge = so.status === 'pending' ? '<span style="background:#fef3c7; color:#92400e; padding: 4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">قيد الانتظار</span>' : '<span style="background:#d1fae5; color:#065f46; padding: 4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">تم التحويل لفاتورة</span>';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; font-weight: bold;">${so.soNumber}</td>
+                        <td>${so.date}</td>
+                        <td style="text-align: right;">${so.customerName}</td>
+                        <td style="font-family: monospace; font-weight: bold;">${parseFloat(so.total).toFixed(2)}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            ${so.status === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="convertSOToInvoice(${so.id})">تحويل لفاتورة</button>` : '-'}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        function openSOModal() {
+            document.getElementById('so-modal').style.display = 'flex';
+            document.getElementById('so-form').reset();
+            document.getElementById('so-date').valueAsDate = new Date();
+            const customerSelect = document.getElementById('so-customer');
+            customerSelect.innerHTML = '<option value="">-- اختر العميل --</option>';
+            getCustomers().forEach(cust => { customerSelect.innerHTML += `<option value="${cust.id}" data-name="${cust.name}">${cust.name}</option>`; });
+            const branchSelect = document.getElementById('so-branch');
+            branchSelect.innerHTML = '<option value="">-- اختر الفرع --</option>';
+            getCostCenters().forEach(c => { branchSelect.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`; });
+            document.getElementById('so-items-body').innerHTML = '';
+            addSORow();
+        }
+        function closeSOModal() {
+            document.getElementById('so-modal').style.display = 'none';
+        }
+        function addSORow() {
+            const tbody = document.getElementById('so-items-body');
+            const tr = document.createElement('tr');
+            let options = '<option value="">-- اختر الصنف --</option>';
+            getItems().forEach(item => { options += `<option value="${item.id}" data-price="${item.salePrice}" data-name="${item.name}">${item.name} (متوفر: ${item.qty})</option>`; });
+            tr.innerHTML = `
+                <td><select class="so-item-select" onchange="updateSORow(this)" style="width:100%; padding:8px;">${options}</select></td>
+                <td><input type="text" class="so-item-qty" value="1" oninput="calcSOTotal()" style="width:100%; text-align:center;"></td>
+                <td><input type="text" class="so-item-price" oninput="calcSOTotal()" style="width:100%; text-align:center;"></td>
+                <td><button type="button" class="btn-delete" onclick="this.parentElement.parentElement.remove(); calcSOTotal();">حذف</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        function updateSORow(select) {
+            const row = select.parentElement.parentElement;
+            if(select.value) row.querySelector('.so-item-price').value = select.options[select.selectedIndex].getAttribute('data-price');
+            calcSOTotal();
+        }
+        function calcSOTotal() {
+            let total = 0;
+            document.querySelectorAll('#so-items-body tr').forEach(row => {
+                const q = parseFloat(row.querySelector('.so-item-qty').value) || 0;
+                const p = parseFloat(row.querySelector('.so-item-price').value) || 0;
+                total += (q * p);
+            });
+            document.getElementById('so-total').textContent = total.toFixed(2);
+            return total;
+        }
+        function saveSO(event) {
+            event.preventDefault();
+            const customerId = document.getElementById('so-customer').value;
+            const customerName = document.getElementById('so-customer').options[document.getElementById('so-customer').selectedIndex]?.getAttribute('data-name');
+            const date = document.getElementById('so-date').value;
+            const total = calcSOTotal();
+            if (!customerId || total <= 0) return alert('يرجى اختيار العميل وإضافة أصناف صحيحة.');
+            let itemsDet = [];
+            document.querySelectorAll('#so-items-body tr').forEach(row => {
+                const sel = row.querySelector('.so-item-select');
+                if(!sel.value) return;
+                itemsDet.push({
+                    itemId: parseInt(sel.value),
+                    itemName: sel.options[sel.selectedIndex].getAttribute('data-name'),
+                    qty: parseFloat(row.querySelector('.so-item-qty').value) || 0,
+                    price: parseFloat(row.querySelector('.so-item-price').value) || 0
+                });
+            });
+            const sos = getSalesOrders();
+            const soNum = `SO-${new Date().getFullYear()}-${String(sos.length + 1).padStart(4, '0')}`;
+            const branchSelect = document.getElementById('so-branch');
+            const branchId = parseInt(branchSelect.value);
+            const branchName = branchSelect.options[branchSelect.selectedIndex]?.getAttribute('data-name') || '';
+            sos.push({ id: Date.now(), soNumber: soNum, customerId: parseInt(customerId), customerName, date, total, items: itemsDet, branchId, branchName, status: 'pending' });
+            saveSalesOrders(sos);
+            closeSOModal();
+            renderSOs();
+            alert(`تم حفظ أمر البيع ${soNum} بنجاح!`);
+        }
+        function convertSOToInvoice(id) {
+            if(!confirm('هل أنت متأكد من تحويل أمر البيع إلى فاتورة؟ سيتم فتح الفاتورة معبأة بالبيانات.')) return;
+            window.location.href = 'sales-invoices.html?so_id=' + id;
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

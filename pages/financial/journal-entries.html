@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدخال قيد يومي ذكي | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .smart-entry-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .smart-entry-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .smart-entry-table th { background: #f1f5f9; padding: 12px; text-align: right; font-weight: 800; font-size: 13px; color: #475569; border-bottom: 2px solid #cbd5e1; }
+        .smart-entry-table td { padding: 6px; border-bottom: 1px solid #f1f5f9; }
+        .smart-entry-table input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: inherit; font-size: 13px; outline: none; }
+        .smart-entry-table input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+        .smart-entry-table input[readonly] { background: #f8fafc; color: #64748b; }
+        .row-actions { display: flex; gap: 5px; }
+        .btn-row-action { background: #ef4444; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-row-add { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        .totals-smart { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
+        .totals-smart .total-item { text-align: center; }
+        .totals-smart .total-item .label { font-size: 12px; opacity: 0.8; margin-bottom: 5px; }
+        .totals-smart .total-item .val { font-size: 22px; font-weight: 800; font-family: monospace; }
+        .totals-smart .status-box { padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 14px; }
+        .totals-smart .status-warning { background: #fee2e2; color: #991b1b; }
+        .totals-smart .status-success { background: #d1fae5; color: #065f46; }
+        /* القائمة المنسدلة للبحث */
+        .account-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .account-dropdown div { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .account-dropdown div:hover { background: #f0fdf4; color: #10b981; }
+        .input-wrapper { position: relative; }
+        /* زر الإرفاق */
+        .attach-btn { display: inline-flex; align-items: center; gap: 8px; background: #f1f5f9; color: #475569; border: 1px dashed #cbd5e1; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .attach-btn:hover { border-color: #10b981; color: #10b981; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>📝 إدخال قيد يومي ذكي (Smart Journal Entry)</h2>
+                <div class="header-actions" style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="openCopyModal()">📋 نسخ من قيد سابق</button>
+                    <button class="btn btn-secondary" onclick="clearAll()">🗑️ تفريغ الشاشة</button>
+                </div>
+            </div>
+            <div class="entry-form-container">
+                <!-- رأس القيد -->
+                <div class="smart-entry-header">
+                    <div class="form-group">
+                        <label>رقم القيد</label>
+                        <input type="text" id="sm-ref" readonly style="background: #e2e8f0; font-weight: bold; text-align: center;">
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="date" id="sm-date">
+                    </div>
+                    <div class="form-group">
+                        <label>البيان (الشرح)</label>
+                        <input type="text" id="sm-desc" placeholder="شرح القيد..." onkeypress="if(event.key==='Enter') addSmartRow()">
+                    </div>
+                    <div class="form-group">
+                        <label>الفرع / مركز التكلفة</label>
+                        <select id="sm-branch"></select>
+                    </div>
+                </div>
+                <!-- جدول القيد -->
+                <table class="smart-entry-table" id="smart-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">الحساب (ابحث بالرقم أو الاسم)</th>
+                            <th style="width: 30%;">اسم الحساب</th>
+                            <th style="width: 15%;">مدين</th>
+                            <th style="width: 15%;">دائن</th>
+                            <th style="width: 15%;">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="smart-tbody"></tbody>
+                </table>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <button class="btn-row-add" onclick="addSmartRow()">+ إضافة سطر (Enter)</button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label class="attach-btn" for="file-attach">📎 إرفاق مستند (اختياري)</label>
+                        <input type="file" id="file-attach" style="display: none;" onchange="showAttachedFile(this)">
+                        <span id="attached-name" style="font-size: 12px; color: #10b981; font-weight: bold;"></span>
+                    </div>
+                </div>
+                <!-- شريط الإجماليات والموازنة -->
+                <div class="totals-smart">
+                    <div class="total-item">
+                        <div class="label">إجمالي المدين</div>
+                        <div class="val" id="sm-total-debit">0.00</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="label">إجمالي الدائن</div>
+                        <div class="val" id="sm-total-credit">0.00</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="label">الفرق</div>
+                        <div class="val" id="sm-diff">0.00</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="autoBalance()" style="background: #f59e0b; padding: 12px 20px; font-weight: bold; border-radius: 8px;">⚖️ موازنة تلقائية</button>
+                    <div id="sm-status" class="status-box status-warning">غير متوازن</div>
+                </div>
+                <button class="btn btn-success" style="width: 100%; padding: 18px; font-size: 18px; margin-top: 25px;" onclick="postSmartEntry()">🚀 ترحيل وحفظ القيد</button>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة نسخ قيد سابق -->
+    <div class="modal-overlay" id="copy-modal">
+        <div class="modal-content" style="width: 700px;">
+            <div class="modal-header">
+                <h3>نسخ قيد سابق</h3>
+                <button class="close-btn" onclick="document.getElementById('copy-modal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <table class="data-table" style="font-size: 13px;">
+                    <thead><tr><th>رقم القيد</th><th>التاريخ</th><th>البيان</th><th>المبلغ</th><th>إجراء</th></tr></thead>
+                    <tbody id="copy-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        async function syncEntryToBackend(entry) {
+            try {
+                const response = await fetch('http://localhost:5000/api/entries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(entry)
+                });
+                if (response.ok) console.log('✅ تم حفظ القيد في قاعدة البيانات الحقيقية');
+                else console.error('❌ فشل الخادم في حفظ القيد');
+            } catch (error) {
+                console.error('❌ تعذر الاتصال بالخادم الخلفي:', error);
+            }
+        }
+    
+        let globalAccounts = [];
+        let attachedFileName = "";
+        document.addEventListener('DOMContentLoaded', () => {
+            globalAccounts = getAccounts();
+            document.getElementById('sm-date').valueAsDate = new Date();
+            // تعبئة الفروع
+            const branchSelect = document.getElementById('sm-branch');
+            branchSelect.innerHTML = '<option value="">-- بدون فرع --</option>';
+            getCostCenters().filter(c => c.type === 'فرع').forEach(b => {
+                branchSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+            });
+            generateEntryNumber();
+            addSmartRow();
+            addSmartRow();
+        });
+        function generateEntryNumber() {
+            const entries = getEntries();
+            const num = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            document.getElementById('sm-ref').value = num;
+        }
+        function addSmartRow() {
+            const tbody = document.getElementById('smart-tbody');
+            const tr = document.createElement('tr');
+            // قائمة الحسابات المسموحة (مستوى 2 و 3)
+            const searchableAccounts = globalAccounts.filter(a => a.level >= 2);
+            tr.innerHTML = `
+                <td>
+                    <div class="input-wrapper">
+                        <input type="text" class="acc-search" placeholder="ابحث برقم أو اسم الحساب..." autocomplete="off" oninput="filterAccounts(this)" onblur="setTimeout(()=>hideDropdown(this), 200)">
+                        <div class="account-dropdown" onmousedown="selectAccount(event, this)"></div>
+                    </div>
+                </td>
+                <td><input type="text" class="acc-name" readonly tabindex="-1"></td>
+                <td><input type="text" inputmode="decimal" class="debit-input" value="0.00" oninput="handleAmount(this, 'debit')" onfocus="this.select()"></td>
+                <td><input type="text" inputmode="decimal" class="credit-input" value="0.00" oninput="handleAmount(this, 'credit')" onfocus="this.select()"></td>
+                <td><button class="btn-row-action" onclick="removeRow(this)">حذف</button></td>
+            `;
+            tbody.appendChild(tr);
+            // إضافة حدث Enter لإضافة سطر جديد
+            const inputs = tr.querySelectorAll('input');
+            inputs.forEach(inp => {
+                inp.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (inputs[inputs.length-1] === inp) addSmartRow();
+                    }
+                });
+            });
+            // تخزين الحسابات في العنصر لاستخدامها
+            tr.dataset.accounts = JSON.stringify(searchableAccounts);
+        }
+        function filterAccounts(input) {
+            const query = input.value.trim().toLowerCase();
+            const dropdown = input.nextElementSibling;
+            const tr = input.closest('tr');
+            const accounts = JSON.parse(tr.dataset.accounts);
+            if (query.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            const matches = accounts.filter(a => 
+                a.code.toLowerCase().includes(query) || 
+                a.name.toLowerCase().includes(query)
+            ).slice(0, 10);
+            if (matches.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            dropdown.innerHTML = matches.map(a => `
+                <div data-code="${a.code}" data-name="${a.name}">
+                    <strong style="color: #10b981;">${a.code}</strong> - ${a.name}
+                </div>
+            `).join('');
+            dropdown.style.display = 'block';
+        }
+        function selectAccount(event, dropdown) {
+            // منع اختفاء القائمة قبل التنفيذ
+            event.preventDefault();
+            const target = event.target.closest('div[data-code]');
+            if (!target) return;
+            const code = target.dataset.code;
+            const name = target.dataset.name;
+            const tr = dropdown.closest('tr');
+            tr.querySelector('.acc-search').value = code;
+            tr.querySelector('.acc-name').value = name;
+            dropdown.style.display = 'none';
+        }
+        function hideDropdown(input) {
+            if (input.nextElementSibling) input.nextElementSibling.style.display = 'none';
+        }
+        function handleAmount(input, type) {
+            // تنظيف المدخلات
+            let val = input.value.replace(/[^0-9.]/g, '');
+            if ((val.match(/\./g) || []).length > 1) val = val.slice(0, -1);
+            input.value = val;
+            if (parseFloat(val) > 0) {
+                const row = input.closest('tr');
+                if (type === 'debit') row.querySelector('.credit-input').value = '0.00';
+                else row.querySelector('.debit-input').value = '0.00';
+            }
+            recalcTotals();
+        }
+        function removeRow(btn) {
+            btn.closest('tr').remove();
+            recalcTotals();
+        }
+        function recalcTotals() {
+            let d = 0, c = 0;
+            document.querySelectorAll('.debit-input').forEach(i => d += parseFloat(i.value) || 0);
+            document.querySelectorAll('.credit-input').forEach(i => c += parseFloat(i.value) || 0);
+            document.getElementById('sm-total-debit').textContent = d.toFixed(2);
+            document.getElementById('sm-total-credit').textContent = c.toFixed(2);
+            const diff = d - c;
+            document.getElementById('sm-diff').textContent = Math.abs(diff).toFixed(2);
+            const statusBox = document.getElementById('sm-status');
+            if (d === c && d > 0) {
+                statusBox.textContent = "✅ متوازن";
+                statusBox.className = "status-box status-success";
+            } else {
+                statusBox.textContent = "⚠️ غير متوازن";
+                statusBox.className = "status-box status-warning";
+            }
+        }
+        function autoBalance() {
+            let d = 0, c = 0;
+            document.querySelectorAll('.debit-input').forEach(i => d += parseFloat(i.value) || 0);
+            document.querySelectorAll('.credit-input').forEach(i => c += parseFloat(i.value) || 0);
+            const diff = d - c;
+            if (Math.abs(diff) < 0.01) {
+                alert('القيد متوازن بالفعل!');
+                return;
+            }
+            addSmartRow();
+            const newRow = document.getElementById('smart-tbody').lastElementChild;
+            if (diff > 0) {
+                // نحتاج إلى إضافة دائن
+                newRow.querySelector('.credit-input').value = diff.toFixed(2);
+                newRow.querySelector('.acc-search').focus();
+                alert(`تم إضافة سطر بقيمة ${diff.toFixed(2)} في الدائن. يرجى اختيار الحساب.`);
+            } else {
+                // نحتاج إلى إضافة مدين
+                newRow.querySelector('.debit-input').value = Math.abs(diff).toFixed(2);
+                newRow.querySelector('.acc-search').focus();
+                alert(`تم إضافة سطر بقيمة ${Math.abs(diff).toFixed(2)} في المدين. يرجى اختيار الحساب.`);
+            }
+            recalcTotals();
+        }
+        function showAttachedFile(input) {
+            if (input.files && input.files[0]) {
+                attachedFileName = input.files[0].name;
+                document.getElementById('attached-name').textContent = `📎 ${attachedFileName}`;
+            }
+        }
+        function openCopyModal() {
+            const entries = getEntries().reverse().slice(0, 20);
+            const tbody = document.getElementById('copy-body');
+            tbody.innerHTML = '';
+            if (entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد قيود سابقة</td></tr>';
+            } else {
+                entries.forEach(e => {
+                    tbody.innerHTML += `<tr>
+                        <td>${e.entryNumber}</td><td>${e.date}</td><td>${e.description || '-'}</td><td>${e.totalDebit.toFixed(2)}</td>
+                        <td><button class="btn btn-primary" style="padding:5px 10px;font-size:12px;" onclick="loadEntry(${e.id})">نسخ</button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('copy-modal').style.display = 'flex';
+        }
+        function loadEntry(id) {
+            const entry = getEntries().find(e => e.id === id);
+            if (!entry) return;
+            document.getElementById('sm-desc').value = entry.description || '';
+            document.getElementById('sm-tbody').innerHTML = '';
+            entry.lines.forEach(line => {
+                addSmartRow();
+                const row = document.getElementById('smart-tbody').lastElementChild;
+                row.querySelector('.acc-search').value = line.accountCode;
+                row.querySelector('.acc-name').value = line.accountName;
+                row.querySelector('.debit-input').value = line.debit.toFixed(2);
+                row.querySelector('.credit-input').value = line.credit.toFixed(2);
+            });
+            recalcTotals();
+            document.getElementById('copy-modal').style.display = 'none';
+        }
+        function clearAll() {
+            if(!confirm('هل تريد تفريغ الشاشة بالكامل؟')) return;
+            document.getElementById('sm-desc').value = '';
+            document.getElementById('attached-name').textContent = '';
+            document.getElementById('file-attach').value = '';
+            attachedFileName = '';
+            document.getElementById('sm-tbody').innerHTML = '';
+            addSmartRow();
+            addSmartRow();
+            recalcTotals();
+        }
+        function checkBudget(lines) {
+            // فحص الموازنة لكل سطر مدين
+            const budgets = typeof getBudgets === 'function' ? getBudgets() : {};
+            const allEntries = getEntries();
+            const warnings = [];
+            lines.forEach(line => {
+                if (line.debit > 0 && budgets[line.accountCode]) {
+                    const budgetAmount = parseFloat(budgets[line.accountCode]) || 0;
+                    if (budgetAmount === 0) return;
+                    // حساب الفعلي الحالي
+                    let actual = 0;
+                    allEntries.forEach(e => {
+                        if (e.status !== 'reversed') {
+                            e.lines.forEach(l => {
+                                if (l.accountCode === line.accountCode) actual += parseFloat(l.debit) || 0;
+                            });
+                        }
+                    });
+                    const newTotal = actual + line.debit;
+                    if (newTotal > budgetAmount) {
+                        const overBy = newTotal - budgetAmount;
+                        warnings.push(`⚠️ تحذير: حساب "${line.accountName}" تجاوز الموازنة بمقدار ${overBy.toFixed(2)} ريال.\n(الموازنة: ${budgetAmount.toFixed(2)} | الفعلي الجديد: ${newTotal.toFixed(2)})`);
+                    }
+                }
+            });
+            return warnings;
+        }
+        function postSmartEntry() {
+            const date = document.getElementById('sm-date').value;
+            const desc = document.getElementById('sm-desc').value.trim();
+            const branchId = document.getElementById('sm-branch').value;
+            const branchName = document.getElementById('sm-branch').options[document.getElementById('sm-branch').selectedIndex]?.text || '';
+            let d = 0, c = 0;
+            document.querySelectorAll('.debit-input').forEach(i => d += parseFloat(i.value) || 0);
+            document.querySelectorAll('.credit-input').forEach(i => c += parseFloat(i.value) || 0);
+            if (d !== c || d === 0) return alert('القيد غير متوازن أو فارغ! استخدم زر (الموازنة التلقائية).');
+            const lines = [];
+            let hasError = false;
+            document.querySelectorAll('#smart-tbody tr').forEach(row => {
+                const code = row.querySelector('.acc-search').value.trim();
+                const name = row.querySelector('.acc-name').value;
+                const debit = parseFloat(row.querySelector('.debit-input').value) || 0;
+                const credit = parseFloat(row.querySelector('.credit-input').value) || 0;
+                if (code === "" && (debit > 0 || credit > 0)) hasError = true;
+                if (code && (debit > 0 || credit > 0)) {
+                    lines.push({ accountCode: code, accountName: name, debit, credit });
+                }
+            });
+            if (hasError) return alert('هناك سطر يحتوي على مبلغ بدون اختيار حساب!');
+            if (lines.length < 2) return alert('القيد يجب أن يحتوي على سطرين على الأقل.');
+            // فحص الموازنة
+            const budgetWarnings = checkBudget(lines);
+            if (budgetWarnings.length > 0) {
+                if (!confirm(budgetWarnings.join('\n\n') + '\n\nهل تريد المتابعة على أي حال؟')) {
+                    return;
+                }
+            }
+            const entries = getEntries();
+            const entryNum = document.getElementById('sm-ref').value;
+            const finalDesc = desc || `قيد يومية ${entryNum}` + (branchName ? ` - ${branchName}` : '') + (attachedFileName ? ` [مرفق: ${attachedFileName}]` : '');
+            const newEntry = {
+                id: Date.now(),
+                entryNumber: entryNum,
+                date: date,
+                description: finalDesc,
+                lines: lines,
+                totalDebit: d,
+                totalCredit: c,
+                attachment: attachedFileName || null,
+                status: 'posted'
+            };
+            entries.push(newEntry);
+            saveEntries(entries);
+            
+            // إرسال للخادم
+            syncEntryToBackend(newEntry);
+            alert(`تم ترحيل القيد ${entryNum} بنجاح!`);
+            clearAll();
+            generateEntryNumber();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

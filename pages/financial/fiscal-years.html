@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إغلاق السنة المالية | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/sidebar.css?v=555555">
+    <style>
+        .fy-hero {
+            background: linear-gradient(135deg, #0f172a, #991b1b, #dc2626);
+            color: white; padding: 25px 30px; border-radius: 16px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(220,38,38,0.25);
+        }
+        .fy-hero h2 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; }
+        .fy-hero p { margin: 0; opacity: 0.9; font-size: 13px; }
+        .fy-hero .status-box {
+            background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;
+            backdrop-filter: blur(10px); text-align: center;
+        }
+        .fy-hero .status-box .label { font-size: 11px; opacity: 0.85; margin-bottom: 4px; }
+        .fy-hero .status-box .value { font-size: 20px; font-weight: 800; }
+        .fy-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; overflow: hidden; margin-bottom: 20px; }
+        .fy-table table { width: 100%; border-collapse: collapse; }
+        .fy-table th { background: #f8fafc; padding: 15px 12px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; border-bottom: 2px solid #e2e8f0; }
+        .fy-table td { padding: 14px 12px; font-size: 14px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .fy-table tr:hover td { background: #f8fafc; }
+        .status-open { background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-closed { background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .action-btn-group { display: flex; gap: 5px; }
+        .btn-sm { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
+        .btn-close-year { background: #ef4444; color: white; }
+        .btn-reopen-year { background: #f59e0b; color: white; }
+        .btn-view { background: #3b82f6; color: white; }
+        .btn-sm:hover { opacity: 0.85; }
+        .add-btn {
+            background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
+            padding: 12px 24px; border-radius: 10px; font-weight: 800; font-size: 14px;
+            cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .add-btn:hover { transform: translateY(-2px); }
+        /* نموذج الإغلاق */
+        .closing-preview {
+            background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 10px;
+            padding: 20px; margin-top: 15px;
+        }
+        .closing-preview .row {
+            display: flex; justify-content: space-between;
+            padding: 8px 0; font-size: 14px;
+        }
+        .closing-preview .row.total {
+            border-top: 2px solid #0f172a;
+            margin-top: 10px; padding-top: 12px;
+            font-weight: 800; font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="fy-hero">
+                <div>
+                    <h2>🔐 إغلاق السنة المالية</h2>
+                    <p>إنشاء وإغلاق السنوات المالية مع توليد الأرصدة الافتتاحية تلقائيا</p>
+                </div>
+                <div class="status-box">
+                    <div class="label">السنة الحالية</div>
+                    <div class="value" id="hero-year">---</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="add-btn" onclick="openYearModal()">+ إنشاء سنة مالية جديدة</button>
+                <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                    ⚠️ تحذير: إغلاق السنة لا يمكن التراجع عنه إلا بإذن صريح
+                </div>
+            </div>
+            <div class="fy-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 20%;">اسم السنة</th>
+                            <th style="width: 15%;">من تاريخ</th>
+                            <th style="width: 15%;">إلى تاريخ</th>
+                            <th style="width: 15%;">الحالة</th>
+                            <th style="width: 15%;">صافي الربح</th>
+                            <th style="width: 15%;">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="years-body"></tbody>
+                </table>
+            </div>
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 15px 20px; font-size: 13px; color: #92400e; line-height: 1.7;">
+                <strong>📌 ملاحظة محاسبية:</strong> عند إغلاق السنة المالية:
+                <ul style="margin: 8px 0 0 20px; padding: 0;">
+                    <li>يتم تصفير جميع حسابات الإيرادات والمصروفات.</li>
+                    <li>يتم نقل صافي الربح (أو الخسارة) إلى حساب "الأرباح المحتجزة (3102)".</li>
+                    <li>يتم إنشاء قيد إغلاق تلقائي.</li>
+                    <li>لا يمكن تعديل أو إضافة قيود في هذه السنة بعد الإغلاق.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إنشاء سنة مالية -->
+    <div class="modal-overlay" id="year-modal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h3>إنشاء سنة مالية جديدة</h3>
+                <button class="close-btn" onclick="closeYearModal()">×</button>
+            </div>
+            <form onsubmit="saveYear(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>اسم السنة المالية</label>
+                        <input type="text" id="year-name" placeholder="مثال: السنة المالية 2026" required>
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>تاريخ البداية</label>
+                            <input type="date" id="year-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label>تاريخ النهاية</label>
+                            <input type="date" id="year-end" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeYearModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">إنشاء السنة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- نافذة تأكيد الإغلاق -->
+    <div class="modal-overlay" id="close-confirm-modal">
+        <div class="modal-content" style="width: 650px;">
+            <div class="modal-header" style="background: #dc2626;">
+                <h3>⚠️ تأكيد إغلاق السنة المالية</h3>
+                <button class="close-btn" onclick="closeConfirmModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 15px; margin-bottom: 15px;">أنت على وشك إغلاق السنة المالية: <strong id="confirm-year-name"></strong></p>
+                <div class="closing-preview" id="closing-preview"></div>
+                <p style="color: #dc2626; font-weight: 700; margin-top: 15px; font-size: 13px;">
+                    ⚠️ هذا الإجراء سيقوم بإنشاء قيد إغلاق دائم ولن تتمكن من إضافة قيود جديدة في هذه السنة.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">إلغاء</button>
+                <button type="button" class="btn btn-success" style="background: #dc2626;" onclick="executeCloseYear()">🔐 تأكيد الإغلاق</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let closingYearId = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            renderYears();
+        });
+        function renderYears() {
+            const tbody = document.getElementById('years-body');
+            const years = getFiscalYears().sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+            const current = getCurrentFiscalYear();
+            document.getElementById('hero-year').textContent = current ? current.name : 'لا توجد';
+            if (years.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#94a3b8;">لا توجد سنوات مالية. اضغط على "إنشاء سنة مالية جديدة" للبدء.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            years.forEach((y, idx) => {
+                let status = y.isClosed ? '<span class="status-closed">🔒 مغلقة</span>' : '<span class="status-open">🔓 مفتوحة</span>';
+                let netProfit = y.isClosed && y.netProfit !== undefined ? y.netProfit.toFixed(2) : '-';
+                let actions = '';
+                if (!y.isClosed) {
+                    actions = `<button class="btn-sm btn-close-year" onclick="confirmCloseYear(${y.id})">🔐 إغلاق</button>`;
+                } else {
+                    actions = `<button class="btn-sm btn-reopen-year" onclick="reopenYear(${y.id})">🔓 إعادة فتح</button>`;
+                }
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td style="font-weight: 700; color: #dc2626;">${y.name}</td>
+                        <td style="font-family: monospace;">${y.startDate}</td>
+                        <td style="font-family: monospace;">${y.endDate}</td>
+                        <td>${status}</td>
+                        <td style="font-family: monospace; font-weight: 800; color: ${y.netProfit >= 0 ? '#10b981' : '#ef4444'};">${netProfit}</td>
+                        <td>${actions}</td>
+                    </tr>
+                `;
+            });
+        }
+        function openYearModal() {
+            document.getElementById('year-modal').style.display = 'flex';
+            document.getElementById('year-name').value = '';
+            const today = new Date();
+            document.getElementById('year-start').value = `${today.getFullYear()}-01-01`;
+            document.getElementById('year-end').value = `${today.getFullYear()}-12-31`;
+        }
+        function closeYearModal() {
+            document.getElementById('year-modal').style.display = 'none';
+        }
+        function saveYear(event) {
+            event.preventDefault();
+            const name = document.getElementById('year-name').value.trim();
+            const start = document.getElementById('year-start').value;
+            const end = document.getElementById('year-end').value;
+            if (new Date(start) >= new Date(end)) {
+                return alert('⚠️ تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+            }
+            const result = createNewFiscalYear(name, start, end);
+            if (result.success) {
+                closeYearModal();
+                renderYears();
+                alert('✅ تم إنشاء السنة المالية بنجاح!');
+            } else {
+                alert('⚠️ ' + result.error);
+            }
+        }
+        function confirmCloseYear(yearId) {
+            closingYearId = yearId;
+            const year = getFiscalYears().find(y => y.id === yearId);
+            if (!year) return;
+            // حساب المعاينة
+            const accounts = getAccounts();
+            const entries = getEntries();
+            const yearEntries = entries.filter(e => e.date >= year.startDate && e.date <= year.endDate && e.status !== 'reversed');
+            let totalRevenue = 0, totalExpense = 0;
+            accounts.forEach(acc => {
+                if (acc.type === 'إيرادات' || acc.type === 'مصروفات') {
+                    let balance = 0;
+                    yearEntries.forEach(entry => {
+                        entry.lines.forEach(line => {
+                            if (line.accountCode === acc.code) {
+                                if (acc.type === 'إيرادات') balance += (line.credit - line.debit);
+                                else balance += (line.debit - line.credit);
+                            }
+                        });
+                    });
+                    if (balance > 0.01) {
+                        if (acc.type === 'إيرادات') totalRevenue += balance;
+                        else totalExpense += balance;
+                    }
+                }
+            });
+            const netProfit = totalRevenue - totalExpense;
+            document.getElementById('confirm-year-name').textContent = year.name;
+            document.getElementById('closing-preview').innerHTML = `
+                <div class="row"><span>إجمالي الإيرادات (سيتم تصفيرها):</span><strong style="color: #10b981;">${totalRevenue.toFixed(2)}</strong></div>
+                <div class="row"><span>إجمالي المصروفات (سيتم تصفيرها):</span><strong style="color: #ef4444;">${totalExpense.toFixed(2)}</strong></div>
+                <div class="row total"><span>صافي ${netProfit >= 0 ? 'الربح' : 'الخسارة'} (سينقل للأرباح المحتجزة):</span><strong style="color: ${netProfit >= 0 ? '#10b981' : '#ef4444'};">${Math.abs(netProfit).toFixed(2)}</strong></div>
+            `;
+            document.getElementById('close-confirm-modal').style.display = 'flex';
+        }
+        function closeConfirmModal() {
+            document.getElementById('close-confirm-modal').style.display = 'none';
+            closingYearId = null;
+        }
+        function executeCloseYear() {
+            if (!closingYearId) return;
+            const result = closeFiscalYear(closingYearId);
+            if (result.success) {
+                closeConfirmModal();
+                renderYears();
+                alert(`✅ تم إغلاق السنة بنجاح!
+رقم قيد الإغلاق: ${result.closingEntryNumber}
+صافي الربح: ${result.netProfit.toFixed(2)}
+تم إنشاء قيد الإغلاق في القيود اليومية.`);
+            } else {
+                alert('⚠️ ' + result.error);
+            }
+        }
+        function reopenYear(yearId) {
+            if (!confirm('⚠️ تحذير خطير: إعادة فتح سنة مالية مغلقة يسمح بالتعديل عليها. سيتم تسجيل هذا الإجراء في سجل التدقيق. متابعة')) return;
+            const years = getFiscalYears();
+            const year = years.find(y => y.id === yearId);
+            if (!year) return;
+            year.isClosed = false;
+            year.reopenedAt = new Date().toISOString();
+            saveFiscalYears(years);
+            if (typeof saveAuditLog === 'function') {
+                saveAuditLog("إعادة فتح سنة مالية", `تم إعادة فتح السنة ${year.name} - تحذير: يجب مراجعة القيود`);
+            }
+            renderYears();
+            alert('✅ تم إعادة فتح السنة. يرجى مراجعة القيود.');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

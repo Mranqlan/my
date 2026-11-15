@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>أوامر الشراء</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>أوامر الشراء (Purchase Orders)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openPOModal()">+ إضافة أمر شراء جديد</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">رقم الأمر</th>
+                            <th width="15%">التاريخ</th>
+                            <th width="25%">المورد</th>
+                            <th width="15%">الإجمالي المتوقع</th>
+                            <th width="15%">الحالة</th>
+                            <th width="15%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="po-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="po-modal">
+        <div class="modal-content" style="width: 800px;">
+            <div class="modal-header">
+                <h3>إنشاء أمر شراء جديد</h3>
+                <button class="close-btn" onclick="closePOModal()">×</button>
+            </div>
+            <form id="po-form" onsubmit="savePO(event)">
+                <div class="modal-body">
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>المورد</label>
+                            <select id="po-supplier" required><option value="">-- اختر المورد --</option></select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>تاريخ الأمر</label>
+                            <input type="date" id="po-date" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>الفرع / القسم</label>
+                            <select id="po-branch" required><option value="">-- اختر الفرع --</option></select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th width="50%">الصنف</th>
+                                    <th width="20%">الكمية</th>
+                                    <th width="20%">السعر المتوقع</th>
+                                    <th width="10%">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="po-items-body"></tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 10px;" onclick="addPORow()">+ إضافة صنف</button>
+                    <div class="totals-section" style="margin-top: 15px; justify-content: space-between; background: #f8fafc; padding: 15px; border-radius: 8px;">
+                        <span style="font-weight: bold;">إجمالي أمر الشراء:</span>
+                        <strong id="po-total" style="font-size: 20px; color: var(--primary-color); font-family: monospace;">0.00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closePOModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ أمر الشراء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('po-date').valueAsDate = new Date();
+            renderPOs();
+        });
+        function renderPOs() {
+            const tbody = document.getElementById('po-body');
+            const pos = getPurchaseOrders();
+            tbody.innerHTML = '';
+            if (pos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #64748b;">لا توجد أوامر شراء مسجلة.</td></tr>';
+                return;
+            }
+            pos.reverse().forEach(po => {
+                let statusBadge = po.status === 'pending' ? '<span style="background:#fef3c7; color:#92400e; padding: 4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">قيد الانتظار</span>' : '<span style="background:#d1fae5; color:#065f46; padding: 4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">تم التحويل لفاتورة</span>';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; font-weight: bold;">${po.poNumber}</td>
+                        <td>${po.date}</td>
+                        <td style="text-align: right;">${po.supplierName}</td>
+                        <td style="font-family: monospace; font-weight: bold;">${parseFloat(po.total).toFixed(2)}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            ${po.status === 'pending' ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="convertToInvoice(${po.id})">تحويل لفاتورة</button>` : '-'}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        function openPOModal() {
+            document.getElementById('po-modal').style.display = 'flex';
+            document.getElementById('po-form').reset();
+            document.getElementById('po-date').valueAsDate = new Date();
+            const supplierSelect = document.getElementById('po-supplier');
+            supplierSelect.innerHTML = '<option value="">-- اختر المورد --</option>';
+            getSuppliers().forEach(sup => { supplierSelect.innerHTML += `<option value="${sup.id}" data-name="${sup.name}">${sup.name}</option>`; });
+            const branchSelect = document.getElementById('po-branch');
+            branchSelect.innerHTML = '<option value="">-- اختر الفرع --</option>';
+            getCostCenters().forEach(c => { branchSelect.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`; });
+            document.getElementById('po-items-body').innerHTML = '';
+            addPORow();
+        }
+        function closePOModal() {
+            document.getElementById('po-modal').style.display = 'none';
+        }
+        function addPORow() {
+            const tbody = document.getElementById('po-items-body');
+            const tr = document.createElement('tr');
+            let options = '<option value="">-- اختر الصنف --</option>';
+            getItems().forEach(item => { options += `<option value="${item.id}" data-cost="${item.purchasePrice}" data-name="${item.name}">${item.name}</option>`; });
+            tr.innerHTML = `
+                <td><select class="po-item-select" onchange="updatePOPRow(this)" style="width:100%; padding:8px;">${options}</select></td>
+                <td><input type="text" class="po-item-qty" value="1" oninput="calcPOTotal()" style="width:100%; text-align:center;"></td>
+                <td><input type="text" class="po-item-price" oninput="calcPOTotal()" style="width:100%; text-align:center;"></td>
+                <td><button type="button" class="btn-delete" onclick="this.parentElement.parentElement.remove(); calcPOTotal();">حذف</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+        function updatePOPRow(select) {
+            const row = select.parentElement.parentElement;
+            if(select.value) row.querySelector('.po-item-price').value = select.options[select.selectedIndex].getAttribute('data-cost');
+            calcPOTotal();
+        }
+        function calcPOTotal() {
+            let total = 0;
+            document.querySelectorAll('#po-items-body tr').forEach(row => {
+                const q = parseFloat(row.querySelector('.po-item-qty').value) || 0;
+                const p = parseFloat(row.querySelector('.po-item-price').value) || 0;
+                total += (q * p);
+            });
+            document.getElementById('po-total').textContent = total.toFixed(2);
+            return total;
+        }
+        function savePO(event) {
+            event.preventDefault();
+            const supplierId = document.getElementById('po-supplier').value;
+            const supplierName = document.getElementById('po-supplier').options[document.getElementById('po-supplier').selectedIndex]?.getAttribute('data-name');
+            const date = document.getElementById('po-date').value;
+            const total = calcPOTotal();
+            if (!supplierId || total <= 0) return alert('يرجى اختيار المورد وإضافة أصناف صحيحة.');
+            let itemsDet = [];
+            document.querySelectorAll('#po-items-body tr').forEach(row => {
+                const sel = row.querySelector('.po-item-select');
+                if(!sel.value) return;
+                itemsDet.push({
+                    itemId: parseInt(sel.value),
+                    itemName: sel.options[sel.selectedIndex].getAttribute('data-name'),
+                    qty: parseFloat(row.querySelector('.po-item-qty').value) || 0,
+                    price: parseFloat(row.querySelector('.po-item-price').value) || 0
+                });
+            });
+            const pos = getPurchaseOrders();
+            const poNum = `PO-${new Date().getFullYear()}-${String(pos.length + 1).padStart(4, '0')}`;
+            const branchSelect = document.getElementById('po-branch');
+            const branchId = parseInt(branchSelect.value);
+            const branchName = branchSelect.options[branchSelect.selectedIndex]?.getAttribute('data-name') || '';
+            pos.push({ id: Date.now(), poNumber: poNum, supplierId: parseInt(supplierId), supplierName, date, total, items: itemsDet, branchId, branchName, status: 'pending' });
+            savePurchaseOrders(pos);
+            closePOModal();
+            renderPOs();
+            alert(`تم حفظ أمر الشراء ${poNum} بنجاح!`);
+        }
+        function convertToInvoice(id) {
+            if(!confirm('هل أنت متأكد من تحويل أمر الشراء إلى فاتورة؟')) return;
+            window.location.href = 'purchase-invoices.html?po_id=' + id;
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>التحليل المالي</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .ratio-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-right: 4px solid #3b82f6;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+        .ratio-card:hover { transform: translateY(-3px); }
+        .ratio-card h3 { color: var(--text-main); font-size: 15px; margin-bottom: 8px; font-weight: 700; }
+        .ratio-card .value { font-size: 32px; font-weight: 800; font-family: monospace; margin: 10px 0; }
+        .ratio-card .desc { font-size: 12px; color: var(--text-light); line-height: 1.5; }
+        .ratio-card .status-badge {
+            display: inline-block; padding: 5px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: bold; margin-top: 10px;
+        }
+        .status-good { background: #d1fae5; color: #065f46; }
+        .status-warn { background: #fef3c7; color: #92400e; }
+        .status-bad { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>التحليل المالي (Financial Ratios)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+                    <button class="btn btn-primary" onclick="calculateRatios()">تحديث 🔄</button>
+                </div>
+            </div>
+            <div class="page-header" style="margin-top: 10px;">
+                <h3 style="color: var(--primary-color); font-size: 18px;">1. نسب السيولة (Liquidity Ratios)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div class="ratio-card" id="card-current">
+                    <h3>نسبة التداول (Current Ratio)</h3>
+                    <div class="value" id="ratio-current">0.00</div>
+                    <div class="desc">الأصول المتداولة ÷ الخصوم المتداولة. المثالي: أكثر من 1.5</div>
+                    <div id="status-current" class="status-badge"></div>
+                </div>
+                <div class="ratio-card" id="card-quick">
+                    <h3>نسبة السيولة السريعة (Quick Ratio)</h3>
+                    <div class="value" id="ratio-quick">0.00</div>
+                    <div class="desc">(الأصول المتداولة - المخزون) ÷ الخصوم المتداولة. المثالي: أكثر من 1</div>
+                    <div id="status-quick" class="status-badge"></div>
+                </div>
+                <div class="ratio-card" id="card-cash">
+                    <h3>نسبة النقدية (Cash Ratio)</h3>
+                    <div class="value" id="ratio-cash">0.00</div>
+                    <div class="desc">النقدية والبنك ÷ الخصوم المتداولة. المثالي: أعلى من 0.5</div>
+                    <div id="status-cash" class="status-badge"></div>
+                </div>
+            </div>
+            <div class="page-header">
+                <h3 style="color: var(--primary-color); font-size: 18px;">2. نسب الربحية (Profitability Ratios)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div class="ratio-card" style="border-right-color: #10b981;" id="card-margin">
+                    <h3>هامش صافي الربح (Net Profit Margin)</h3>
+                    <div class="value" id="ratio-margin">0%</div>
+                    <div class="desc">صافي الربح ÷ الإيرادات × 100. كلما زاد كان أفضل.</div>
+                    <div id="status-margin" class="status-badge"></div>
+                </div>
+                <div class="ratio-card" style="border-right-color: #10b981;" id="card-roa">
+                    <h3>العائد على الأصول (ROA)</h3>
+                    <div class="value" id="ratio-roa">0%</div>
+                    <div class="desc">صافي الربح ÷ إجمالي الأصول × 100. يقيس كفاءة استخدام الأصول.</div>
+                    <div id="status-roa" class="status-badge"></div>
+                </div>
+                <div class="ratio-card" style="border-right-color: #10b981;" id="card-roe">
+                    <h3>العائد على حقوق الملكية (ROE)</h3>
+                    <div class="value" id="ratio-roe">0%</div>
+                    <div class="desc">صافي الربح ÷ حقوق الملكية × 100. يقيس العائد للمستثمرين.</div>
+                    <div id="status-roe" class="status-badge"></div>
+                </div>
+            </div>
+            <div class="page-header">
+                <h3 style="color: var(--primary-color); font-size: 18px;">3. نسب المديونية (Leverage Ratios)</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div class="ratio-card" style="border-right-color: #ef4444;" id="card-debt">
+                    <h3>نسبة المديونية (Debt Ratio)</h3>
+                    <div class="value" id="ratio-debt">0%</div>
+                    <div class="desc">إجمالي الخصوم ÷ إجمالي الأصول × 100. نسبة أقل تعني أمانا ماليا أعلى.</div>
+                    <div id="status-debt" class="status-badge"></div>
+                </div>
+                <div class="ratio-card" style="border-right-color: #ef4444;" id="card-equity">
+                    <h3>نسبة الدين إلى حقوق الملكية (D/E)</h3>
+                    <div class="value" id="ratio-equity">0.00</div>
+                    <div class="desc">إجمالي الخصوم ÷ حقوق الملكية. المثالي: أقل من 2.</div>
+                    <div id="status-equity" class="status-badge"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { calculateRatios(); });
+        function getBalances() {
+            const accounts = getAccounts();
+            const entries = getEntries();
+            let b = { currentAssets: 0, fixedAssets: 0, currentLiab: 0, longLiab: 0, equity: 0, revenue: 0, expenses: 0, inventory: 0, cash: 0 };
+            accounts.forEach(acc => {
+                let balance = 0;
+                entries.forEach(entry => {
+                    entry.lines.forEach(line => {
+                        if (line.accountCode === acc.code) {
+                            if (acc.type === 'أصول' || acc.type === 'مصروفات') balance += (line.debit - line.credit);
+                            else balance += (line.credit - line.debit);
+                        }
+                    });
+                });
+                if (acc.type === 'أصول') {
+                    if (acc.code.startsWith('11')) b.currentAssets += balance;
+                    else if (acc.code.startsWith('12')) b.fixedAssets += balance;
+                    if (acc.code === '1104') b.inventory += balance;
+                    if (acc.code === '1101' || acc.code === '1102') b.cash += balance;
+                }
+                if (acc.type === 'خصوم') b.currentLiab += balance;
+                if (acc.type === 'حقوق ملكية') b.equity += balance;
+                if (acc.type === 'إيرادات') b.revenue += balance;
+                if (acc.type === 'مصروفات') b.expenses += balance;
+            });
+            return b;
+        }
+        function setStatus(id, text, cls) {
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.textContent = text;
+            el.className = 'status-badge ' + cls;
+        }
+        function calculateRatios() {
+            const b = getBalances();
+            const netProfit = b.revenue - b.expenses;
+            const totalAssets = b.currentAssets + b.fixedAssets;
+            const totalLiab = b.currentLiab + b.longLiab;
+            // 1. Current Ratio
+            const current = b.currentLiab > 0 ? (b.currentAssets / b.currentLiab) : 0;
+            document.getElementById('ratio-current').textContent = current.toFixed(2);
+            if (current >= 1.5) setStatus('status-current', '✅ ممتاز', 'status-good');
+            else if (current >= 1) setStatus('status-current', '⚡ مقبول', 'status-warn');
+            else setStatus('status-current', '⚠️ ضعيف', 'status-bad');
+            // 2. Quick Ratio
+            const quick = b.currentLiab > 0 ? ((b.currentAssets - b.inventory) / b.currentLiab) : 0;
+            document.getElementById('ratio-quick').textContent = quick.toFixed(2);
+            if (quick >= 1) setStatus('status-quick', '✅ ممتاز', 'status-good');
+            else if (quick >= 0.5) setStatus('status-quick', '⚡ مقبول', 'status-warn');
+            else setStatus('status-quick', '⚠️ ضعيف', 'status-bad');
+            // 3. Cash Ratio
+            const cash = b.currentLiab > 0 ? (b.cash / b.currentLiab) : 0;
+            document.getElementById('ratio-cash').textContent = cash.toFixed(2);
+            if (cash >= 0.5) setStatus('status-cash', '✅ ممتاز', 'status-good');
+            else if (cash >= 0.2) setStatus('status-cash', '⚡ مقبول', 'status-warn');
+            else setStatus('status-cash', '⚠️ ضعيف', 'status-bad');
+            // 4. Net Profit Margin
+            const margin = b.revenue > 0 ? (netProfit / b.revenue) * 100 : 0;
+            document.getElementById('ratio-margin').textContent = margin.toFixed(1) + '%';
+            if (margin >= 15) setStatus('status-margin', '✅ ممتاز', 'status-good');
+            else if (margin >= 5) setStatus('status-margin', '⚡ مقبول', 'status-warn');
+            else if (margin >= 0) setStatus('status-margin', '⚠️ ضعيف', 'status-bad');
+            else setStatus('status-margin', '❌ خسارة', 'status-bad');
+            // 5. ROA
+            const roa = totalAssets > 0 ? (netProfit / totalAssets) * 100 : 0;
+            document.getElementById('ratio-roa').textContent = roa.toFixed(1) + '%';
+            if (roa >= 10) setStatus('status-roa', '✅ ممتاز', 'status-good');
+            else if (roa >= 3) setStatus('status-roa', '⚡ مقبول', 'status-warn');
+            else setStatus('status-roa', '⚠️ ضعيف', 'status-bad');
+            // 6. ROE
+            const roe = b.equity > 0 ? (netProfit / b.equity) * 100 : 0;
+            document.getElementById('ratio-roe').textContent = roe.toFixed(1) + '%';
+            if (roe >= 15) setStatus('status-roe', '✅ ممتاز', 'status-good');
+            else if (roe >= 5) setStatus('status-roe', '⚡ مقبول', 'status-warn');
+            else setStatus('status-roe', '⚠️ ضعيف', 'status-bad');
+            // 7. Debt Ratio
+            const debt = totalAssets > 0 ? (totalLiab / totalAssets) * 100 : 0;
+            document.getElementById('ratio-debt').textContent = debt.toFixed(1) + '%';
+            if (debt <= 40) setStatus('status-debt', '✅ ممتاز', 'status-good');
+            else if (debt <= 60) setStatus('status-debt', '⚡ مقبول', 'status-warn');
+            else setStatus('status-debt', '⚠️ مرتفع', 'status-bad');
+            // 8. Debt to Equity
+            const de = b.equity > 0 ? (totalLiab / b.equity) : 0;
+            document.getElementById('ratio-equity').textContent = de.toFixed(2);
+            if (de <= 1) setStatus('status-equity', '✅ ممتاز', 'status-good');
+            else if (de <= 2) setStatus('status-equity', '⚡ مقبول', 'status-warn');
+            else setStatus('status-equity', '⚠️ مرتفع', 'status-bad');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

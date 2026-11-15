@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>الميزانية العمومية (المركز المالي)</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile">
+                <span>OMRAN AQLAN</span>
+                <div class="avatar"></div>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="بحث في النظام المحاسبي...">
+            </div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>الميزانية العمومية (Balance Sheet)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة التقرير</button>
+                    <button class="btn btn-primary" onclick="generateBalanceSheet()">تحديث البيانات 🔄</button>
+                </div>
+            </div>
+            <div class="report-container" style="max-width: 1000px;">
+                <div class="report-header">
+                    <h1><span class="dynamic-company-name">شركة AL SHAMEL للمحاسبة</span></h1>
+                    <h3>الميزانية العمومية (المركز المالي)</h3>
+                    <p>كما في تاريخ: <span id="report-date"></span></p>
+                </div>
+                <div class="balance-sheet-grid">
+                    <!-- عمود الأصول (يمين) -->
+                    <div class="bs-column">
+                        <h4 class="bs-title">الأصول (Assets)</h4>
+                        <table class="report-table">
+                            <tbody id="assets-rows">
+                                <!-- سيتم تعبئتها بالجافاسكريبت -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="report-total-row">
+                                    <td>إجمالي الأصول</td>
+                                    <td id="total-assets" class="text-debit">0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <!-- عمود الخصوم وحقوق الملكية (يسار) -->
+                    <div class="bs-column">
+                        <h4 class="bs-title">الخصوم وحقوق الملكية (Liabilities & Equity)</h4>
+                        <table class="report-table">
+                            <tbody id="liabilities-equity-rows">
+                                <!-- سيتم تعبئتها بالجافاسكريبت -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="report-total-row">
+                                    <td>إجمالي الخصوم وحقوق الملكية</td>
+                                    <td id="total-liabilities-equity" class="text-credit">0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <!-- شريط التوازن -->
+                <div id="balance-check" style="margin-top: 30px; padding: 15px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 18px;">
+                    <!-- سيتم إظهار حالة التوازن هنا -->
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="/assets/js/balance-sheet.js?v=777777"></script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

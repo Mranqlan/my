@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سندات القبض والصرف</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header no-print">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area no-print">
+            <div class="page-header">
+                <h2>سندات القبض والصرف</h2>
+            </div>
+            <div class="entry-form-container" style="max-width: 800px; margin: 0 auto;">
+                <div class="entry-top-row" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>نوع السند</label>
+                        <select id="v-type" onchange="updateBtn()"><option value="receipt">سند قبض (استلام نقدية)</option><option value="payment">سند صرف (دفع نقدية)</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ</label>
+                        <input type="date" id="v-date">
+                    </div>
+                </div>
+                <div class="entry-top-row" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>الحساب (الطرف الآخر)</label>
+                        <select id="v-account"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ</label>
+                        <input type="text" id="v-amount" value="0.00" onfocus="this.select()" onchange="this.value = (parseFloat(this.value) || 0).toFixed(2)">
+                    </div>
+                </div>
+                <div class="form-group full-width" style="margin-bottom: 15px;">
+                    <label>الفرع / القسم</label>
+                    <select id="v-branch"></select>
+                </div>
+                <div class="form-group full-width">
+                    <label>البيان (الشرح)</label>
+                    <input type="text" id="v-desc" placeholder="مثال: استلام دفعة من العميل...">
+                </div>
+                <div class="form-group full-width" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                    <label style="color: var(--primary-color);">الحساب المقابل (الخزينة/البنك)</label>
+                    <select id="v-cash-account"></select>
+                </div>
+                <button id="v-save-btn" class="btn btn-success" style="width: 100%; padding: 15px; font-size: 18px; margin-top: 20px;" onclick="saveAndPreview()">حفظ السند وتوليد القيد</button>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay no-print" id="print-modal">
+        <div class="modal-content" style="width: 800px; max-width: 95%;">
+            <div class="modal-header"><h3>معاينة السند</h3><button class="close-btn" onclick="document.getElementById('print-modal').style.display='none'">×</button></div>
+            <div class="modal-body" style="background: #e2e8f0; padding: 20px;">
+                <div id="print-area" style="background: white; padding: 40px; border: 2px solid #1e293b; border-radius: 8px; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px;">
+                        <div style="text-align: right;"><h1 style="color: #1e293b; margin: 0; font-size: 28px;"><span class="dynamic-company-name">شركة AL SHAMEL</span></h1><p style="color: #64748b; margin: 5px 0 0 0; font-size: 14px;"><span class="dynamic-tagline">للأنظمة المحاسبية المتكاملة</span></p></div>
+                        <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px dashed #cbd5e1; font-size: 40px;">🏢</div>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 30px;"><h2 id="p-title" style="background: #1e293b; color: white; display: inline-block; padding: 10px 40px; border-radius: 6px; font-size: 24px; margin: 0;">سند</h2></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 16px;">
+                        <div><strong>رقم السند:</strong> <span id="p-num" style="font-family: monospace;"></span></div>
+                        <div><strong>التاريخ:</strong> <span id="p-date" style="font-family: monospace;"></span></div>
+                    </div>
+                    <div style="font-size: 18px; margin-bottom: 25px; line-height: 2;"><span id="p-action-text">استلمنا من السيد/السادة:</span> <strong id="p-account" style="border-bottom: 1px dotted #000; padding: 0 10px;"></strong></div>
+                    <div style="font-size: 18px; margin-bottom: 25px; line-height: 2;">مبلغاً وقدره: <strong id="p-amount" style="border-bottom: 1px dotted #000; padding: 0 10px; font-family: monospace;"></strong> ريال سعودي</div>
+                    <div style="font-size: 16px; margin-bottom: 50px; line-height: 2;">وذلك عن: <span id="p-desc" style="border-bottom: 1px dotted #000; padding: 0 10px;"></span></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 60px; padding-top: 20px;">
+                        <div style="text-align: center; width: 200px;"><div style="border-top: 1px solid #000; padding-top: 10px; font-weight: bold; color: #1e293b;">توقيع المحاسب</div></div>
+                        <div style="text-align: center; width: 200px;"><div style="border-top: 1px solid #000; padding-top: 10px; font-weight: bold; color: #1e293b;">توقيع المستلم</div></div>
+                        <div style="text-align: center; width: 200px;"><div style="border-top: 1px solid #000; padding-top: 10px; font-weight: bold; color: #1e293b;">توقيع المدير</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="document.getElementById('print-modal').style.display='none'">إغلاق</button><button class="btn btn-success" onclick="window.print()">🖨️ طباعة السند</button></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('v-date').valueAsDate = new Date();
+            const accounts = getAccounts();
+            let opt = '<option value="">-- اختر الحساب --</option>';
+            accounts.forEach(a => { if(a.level>=2 && (a.type==='إيرادات'||a.type==='خصوم'||a.type==='مصروفات'||a.type==='حقوق ملكية'||a.type==='أصول')) opt += `<option value="${a.code}" data-name="${a.name}">${a.code} - ${a.name}</option>`; });
+            document.getElementById('v-account').innerHTML = opt;
+            let cashOpt = '';
+            accounts.forEach(a => { if(a.code==='1101'||a.code==='1102') cashOpt += `<option value="${a.code}" data-name="${a.name}">${a.code} - ${a.name}</option>`; });
+            document.getElementById('v-cash-account').innerHTML = cashOpt;
+            // تعبئة الفروع
+            let branchOpt = '<option value="">-- اختر الفرع --</option>';
+            getCostCenters().forEach(c => { branchOpt += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`; });
+            document.getElementById('v-branch').innerHTML = branchOpt;
+        });
+        function updateBtn() {
+            const type = document.getElementById('v-type').value;
+            const btn = document.getElementById('v-save-btn');
+            btn.textContent = type === 'receipt' ? 'حفظ سند القبض وتوليد القيد' : 'حفظ سند الصرف وتوليد القيد';
+            btn.style.backgroundColor = type === 'receipt' ? '#10b981' : '#ef4444';
+        }
+        function saveAndPreview() {
+            const type = document.getElementById('v-type').value;
+            const date = document.getElementById('v-date').value;
+            const closedYear = isDateInClosedYear(date);
+            if (closedYear) { return alert(`⚠️ عذراً، السنة المالية ${closedYear.name} مغلقة.`); }
+            const closedPeriod = isDateInClosedPeriod(date);
+            if (closedPeriod) {
+                return alert(`⚠️ عذراً، لا يمكن حفظ السند!\nالفترة من ${closedPeriod.startDate} إلى ${closedPeriod.endDate} مغلقة.`);
+            }
+            if (isDateLocked(date)) return alert('⚠️ عذرا لا يمكن الحفظ. هذه الفترة المالية مغلقة.');
+            const accSelect = document.getElementById('v-account');
+            const accCode = accSelect.value;
+            const accName = accSelect.options[accSelect.selectedIndex]?.getAttribute('data-name');
+            const amount = parseFloat(document.getElementById('v-amount').value);
+            const desc = document.getElementById('v-desc').value;
+            const branchName = document.getElementById('v-branch').options[document.getElementById('v-branch').selectedIndex]?.getAttribute('data-name') || '';
+            const cashSelect = document.getElementById('v-cash-account');
+            const cashCode = cashSelect.value;
+            const cashName = cashSelect.options[cashSelect.selectedIndex]?.getAttribute('data-name');
+            if (!accCode || !cashCode || amount <= 0) return alert('يرجى تعبئة الحقول بشكل صحيح.');
+            const entries = getEntries();
+            const entryNum = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            let lines = [];
+            if (type === 'receipt') {
+                lines = [{ accountCode: cashCode, accountName: cashName, debit: amount, credit: 0 }, { accountCode: accCode, accountName: accName, debit: 0, credit: amount }];
+            } else {
+                lines = [{ accountCode: accCode, accountName: accName, debit: amount, credit: 0 }, { accountCode: cashCode, accountName: cashName, debit: 0, credit: amount }];
+            }
+            entries.push({ id: Date.now(), entryNumber: entryNum, date, description: (desc || `سند ${type==='receipt'?'قبض':'صرف'}`) + ` - ${branchName}`, lines, totalDebit: amount, totalCredit: amount });
+            saveEntries(entries);
+            document.getElementById('p-title').textContent = type === 'receipt' ? 'سند قبض' : 'سند صرف';
+            document.getElementById('p-action-text').textContent = type === 'receipt' ? 'استلمنا من السيد/السادة:' : 'دفعنا إلى السيد/السادة:';
+            document.getElementById('p-num').textContent = entryNum;
+            document.getElementById('p-date').textContent = date;
+            document.getElementById('p-account').textContent = accName;
+            document.getElementById('p-amount').textContent = amount.toFixed(2);
+            document.getElementById('p-desc').textContent = desc || '-';
+            document.getElementById('print-modal').style.display = 'flex';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

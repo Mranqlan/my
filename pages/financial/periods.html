@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إغلاق الفترات المالية | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/sidebar.css?v=555555">
+    <style>
+        .period-hero {
+            background: linear-gradient(135deg, #0f172a, #7c3aed, #a855f7);
+            color: white; padding: 25px 30px; border-radius: 16px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(124,58,237,0.25);
+        }
+        .period-hero h2 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; }
+        .period-hero p { margin: 0; opacity: 0.9; font-size: 13px; }
+        .period-hero .status-box {
+            background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px;
+            backdrop-filter: blur(10px); text-align: center;
+        }
+        .period-hero .status-box .label { font-size: 11px; opacity: 0.85; margin-bottom: 4px; }
+        .period-hero .status-box .value { font-size: 20px; font-weight: 800; }
+        .quick-close-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .quick-card {
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
+            text-align: center; transition: all 0.2s;
+        }
+        .quick-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .quick-card .icon { font-size: 32px; margin-bottom: 10px; }
+        .quick-card h4 { margin: 0 0 5px 0; font-size: 14px; color: #0f172a; }
+        .quick-card p { margin: 0 0 12px 0; font-size: 11px; color: #64748b; }
+        .quick-card button {
+            background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
+            border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700;
+            font-size: 12px; cursor: pointer; width: 100%; font-family: inherit;
+        }
+        .quick-card button:hover { opacity: 0.9; }
+        .periods-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; overflow: hidden; }
+        .periods-table table { width: 100%; border-collapse: collapse; }
+        .periods-table th { background: #f8fafc; padding: 15px 12px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .periods-table td { padding: 14px 12px; font-size: 14px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .periods-table tr:hover td { background: #f8fafc; }
+        .status-lock { background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .btn-unlock { background: #f59e0b; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
+        .add-btn {
+            background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;
+            padding: 12px 24px; border-radius: 10px; font-weight: 800; font-size: 14px;
+            cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+            transition: all 0.2s;
+        }
+        .add-btn:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="period-hero">
+                <div>
+                    <h2>🔒 إغلاق الفترات المالية</h2>
+                    <p>قفل الفترات المالية لمنع التعديل على القيود المؤجلة</p>
+                </div>
+                <div class="status-box">
+                    <div class="label">الفترات المغلقة</div>
+                    <div class="value" id="closed-count">0</div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="add-btn" onclick="openPeriodModal()">+ إغلاق فترة جديدة</button>
+                <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                    💡 ملاحظة: عند إغلاق فترة لن يكون بإمكانك إضافة أو تعديل قيود في تلك الفترة
+                </div>
+            </div>
+            <div class="periods-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 20%;">الفترة</th>
+                            <th style="width: 15%;">من تاريخ</th>
+                            <th style="width: 15%;">إلى تاريخ</th>
+                            <th style="width: 20%;">تاريخ الإغلاق</th>
+                            <th style="width: 15%;">الحالة</th>
+                            <th style="width: 10%;">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="periods-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إغلاق فترة -->
+    <div class="modal-overlay" id="period-modal">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h3>إغلاق فترة مالية</h3>
+                <button class="close-btn" onclick="closePeriodModal()">×</button>
+            </div>
+            <form onsubmit="savePeriod(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>اسم الفترة (اختياري)</label>
+                        <input type="text" id="per-name" placeholder="مثال: أكتوبر 2026">
+                    </div>
+                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>من تاريخ</label>
+                            <input type="date" id="per-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label>إلى تاريخ</label>
+                            <input type="date" id="per-end" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closePeriodModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">🔒 إغلاق الفترة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPeriods();
+            // إضافة اقتراحات سريعة
+            setupQuickSuggestions();
+        });
+        function setupQuickSuggestions() {
+            const today = new Date();
+            const quickGrid = document.createElement('div');
+            quickGrid.className = 'quick-close-grid';
+            // اقتراح الشهر الحالي
+            const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            // اقتراح الشهر الماضي
+            const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+            // اقتراح الربع الماضي
+            const currentQuarter = Math.floor(today.getMonth() / 3);
+            const lastQuarterStart = new Date(today.getFullYear(), (currentQuarter - 1) * 3, 1);
+            const lastQuarterEnd = new Date(today.getFullYear(), currentQuarter * 3, 0);
+            // اقتراح السنة الماضية
+            const lastYearStart = new Date(today.getFullYear() - 1, 0, 1);
+            const lastYearEnd = new Date(today.getFullYear() - 1, 11, 31);
+            const suggestions = [
+                { name: 'الشهر الماضي', start: lastMonthStart, end: lastMonthEnd },
+                { name: 'الربع الماضي', start: lastQuarterStart, end: lastQuarterEnd },
+                { name: 'السنة الماضية', start: lastYearStart, end: lastYearEnd },
+                { name: 'الشهر الحالي', start: thisMonthStart, end: thisMonthEnd }
+            ];
+            suggestions.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'quick-card';
+                const startStr = s.start.toISOString().split('T')[0];
+                const endStr = s.end.toISOString().split('T')[0];
+                card.innerHTML = `
+                    <div class="icon">📅</div>
+                    <h4>${s.name}</h4>
+                    <p>${startStr} → ${endStr}</p>
+                    <button onclick="quickClose('${s.name}', '${startStr}', '${endStr}')">إغلاق سريع</button>
+                `;
+                quickGrid.appendChild(card);
+            });
+            document.querySelector('.periods-table').insertAdjacentElement('beforebegin', quickGrid);
+        }
+        function quickClose(name, start, end) {
+            if (!confirm(`هل تريد إغلاق فترة "${name}"
+من: ${start}
+إلى: ${end}`)) return;
+            let periods = getClosedPeriods();
+            if (periods.some(p => p.startDate <= end && p.endDate >= start)) {
+                return alert('⚠️ هذه الفترة تتقاطع مع فترة مغلقة بالفعل!');
+            }
+            periods.push({
+                id: Date.now(),
+                name: name,
+                startDate: start,
+                endDate: end,
+                closedAt: new Date().toISOString()
+            });
+            saveClosedPeriods(periods);
+            renderPeriods();
+            alert('✅ تم إغلاق الفترة بنجاح!');
+        }
+        function renderPeriods() {
+            const tbody = document.getElementById('periods-body');
+            const periods = getClosedPeriods().sort((a, b) => new Date(b.closedAt) - new Date(a.closedAt));
+            document.getElementById('closed-count').textContent = periods.length;
+            if (periods.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#94a3b8;">لا توجد فترات مغلقة. اضغط على "إغلاق فترة جديدة" للبدء.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            periods.forEach((p, idx) => {
+                const closedDate = new Date(p.closedAt).toLocaleDateString('ar-EG');
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td style="font-weight: 700; color: #7c3aed;">${p.name || 'فترة ' + (idx + 1)}</td>
+                        <td style="font-family: monospace;">${p.startDate}</td>
+                        <td style="font-family: monospace;">${p.endDate}</td>
+                        <td style="font-size: 12px; color: #64748b;">${closedDate}</td>
+                        <td><span class="status-lock">🔒 مغلقة</span></td>
+                        <td><button class="btn-unlock" onclick="reopenPeriod(${p.id})">🔓 إعادة فتح</button></td>
+                    </tr>
+                `;
+            });
+        }
+        function openPeriodModal() {
+            document.getElementById('period-modal').style.display = 'flex';
+            document.getElementById('per-name').value = '';
+            document.getElementById('per-start').value = '';
+            document.getElementById('per-end').value = '';
+        }
+        function closePeriodModal() {
+            document.getElementById('period-modal').style.display = 'none';
+        }
+        function savePeriod(event) {
+            event.preventDefault();
+            const name = document.getElementById('per-name').value.trim();
+            const start = document.getElementById('per-start').value;
+            const end = document.getElementById('per-end').value;
+            if (new Date(start) > new Date(end)) {
+                return alert('⚠️ تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+            }
+            let periods = getClosedPeriods();
+            if (periods.some(p => p.startDate <= end && p.endDate >= start)) {
+                return alert('⚠️ هذه الفترة تتقاطع مع فترة مغلقة بالفعل!');
+            }
+            periods.push({
+                id: Date.now(),
+                name: name || `فترة ${periods.length + 1}`,
+                startDate: start,
+                endDate: end,
+                closedAt: new Date().toISOString()
+            });
+            saveClosedPeriods(periods);
+            closePeriodModal();
+            renderPeriods();
+            alert('✅ تم إغلاق الفترة بنجاح!');
+        }
+        function reopenPeriod(id) {
+            if (!confirm('⚠️ هل تريد إعادة فتح هذه الفترة سيتم السماح بالتعديل على قيودها مرة أخرى.')) return;
+            let periods = getClosedPeriods().filter(p => p.id !== id);
+            saveClosedPeriods(periods);
+            renderPeriods();
+            alert('✅ تم إعادة فتح الفترة!');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسوية الحسابات البنكية</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        @media print {
+            .sidebar, .top-header, .page-header .btn, .no-print { display: none !important; }
+            body, .main-wrapper, .content-area { margin: 0 !important; padding: 0 !important; width: 100% !important; background: white !important; height: auto !important; overflow: visible !important; }
+            .table-container { box-shadow: none !important; border: none !important; padding: 0 !important; }
+            .data-table th, .data-table td { border: 1px solid #000 !important; padding: 10px !important; color: #000 !important; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header no-print">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header no-print">
+                <h2>تسوية الحسابات البنكية (Bank Reconciliation)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة المطابقة</button>
+                    <button class="btn btn-primary" onclick="runReconciliation()">تحديث البيانات 🔄</button>
+                </div>
+            </div>
+            <div class="report-container" id="print-area">
+                <div class="report-header" style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 20px;">
+                    <h1 style="color: #1e293b; margin: 0; font-size: 28px;"><span class="dynamic-company-name">شركة AL SHAMEL للمحاسبة</span></h1>
+                    <h3 style="color: #64748b; margin: 5px 0;">مذكرة تسوية الحساب البنكي</h3>
+                    <p style="margin-top: 10px; font-weight: 700;">كما في تاريخ: <span id="report-date"></span></p>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px;">
+                    <!-- الجانب الأول: رصيد النظام -->
+                    <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background: #f8fafc;">
+                        <h3 style="text-align: center; color: var(--primary-color); border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; margin-bottom: 15px;">رصيد النظام (الدفاتر)</h3>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>رصيد حساب البنك بالنظام:</span>
+                            <strong id="sys-bank-balance" style="font-family: monospace;">0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #10b981;">
+                            <span>(+) إيداعات لم تظهر بالبنك:</span>
+                            <strong style="font-family: monospace;">0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #ef4444;">
+                            <span>(-) شيكات صادرة لم تصرف:</span>
+                            <strong id="sys-outstanding-checks" style="font-family: monospace;">0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-top: 2px solid #cbd5e1; padding-top: 10px; margin-top: 10px; font-size: 18px;">
+                            <strong>الرصيد المعدل للنظام:</strong>
+                            <strong id="sys-adjusted-balance" style="font-family: monospace; color: var(--primary-color);">0.00</strong>
+                        </div>
+                    </div>
+                    <!-- الجانب الثاني: رصيد البنك -->
+                    <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background: #f8fafc;">
+                        <h3 style="text-align: center; color: var(--primary-color); border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; margin-bottom: 15px;">رصيد كشف البنك</h3>
+                        <div class="form-group no-print" style="margin-bottom: 20px;">
+                            <label style="font-size: 13px;">أدخل رصيد كشف البنك الفعلي:</label>
+                            <input type="text" inputmode="decimal" id="bank-statement-balance" value="0.00" oninput="runReconciliation()" style="text-align: center; font-size: 18px; font-weight: bold; font-family: monospace;">
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #ef4444;">
+                            <span>(-) رسوم بنكية غير مسجلة:</span>
+                            <strong style="font-family: monospace;">0.00</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-top: 2px solid #cbd5e1; padding-top: 10px; margin-top: 80px; font-size: 18px;">
+                            <strong>الرصيد المعدل للبنك:</strong>
+                            <strong id="bank-adjusted-balance" style="font-family: monospace; color: var(--primary-color);">0.00</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- شريط التوازن -->
+                <div id="reconciliation-result" style="padding: 20px; text-align: center; border-radius: 8px; font-size: 20px; font-weight: bold; background-color: #f1f5f9;">
+                    <!-- سيتم عرض النتيجة هنا -->
+                </div>
+                <!-- جدول الشيكات المعلقة -->
+                <div style="margin-top: 30px;">
+                    <h4 style="margin-bottom: 15px; color: var(--primary-color);">تفاصيل الشيكات الصادرة التي لم تصرف بعد:</h4>
+                    <table class="data-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>رقم الشيك</th>
+                                <th>المورد</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pending-checks-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            document.getElementById('report-date').textContent = today.toLocaleDateString('ar-EG');
+            runReconciliation();
+        });
+        function runReconciliation() {
+            // 1. حساب رصيد البنك من النظام (حساب 1102)
+            const accounts = getAccounts();
+            const entries = getEntries();
+            let sysBankBalance = 0;
+            entries.forEach(entry => {
+                entry.lines.forEach(line => {
+                    if (line.accountCode === '1102') {
+                        sysBankBalance += (line.debit - line.credit);
+                    }
+                });
+            });
+            // 2. حساب الشيكات الصادرة المعلقة
+            const cheques = getCheques();
+            let outstandingChecksTotal = 0;
+            const tbody = document.getElementById('pending-checks-body');
+            tbody.innerHTML = '';
+            const pendingOutgoing = cheques.filter(c => c.type === 'outgoing' && c.status === 'pending');
+            if (pendingOutgoing.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 15px;">لا توجد شيكات معلقة حاليا.</td></tr>';
+            } else {
+                pendingOutgoing.forEach(ch => {
+                    outstandingChecksTotal += parseFloat(ch.amount);
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-family: monospace;">${ch.number}</td>
+                            <td>${ch.accountName}</td>
+                            <td>${ch.dueDate}</td>
+                            <td style="font-family: monospace; font-weight: bold; color: #ef4444;">${parseFloat(ch.amount).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            }
+            // 3. حساب المعدل من جهة النظام
+            const sysAdjustedBalance = sysBankBalance - outstandingChecksTotal;
+            // 4. حساب المعدل من جهة البنك
+            const bankStatementBalance = parseFloat(document.getElementById('bank-statement-balance').value) || 0;
+            const bankAdjustedBalance = bankStatementBalance; // لا توجد رسوم مضافة حاليا
+            // 5. عرض النتائج
+            document.getElementById('sys-bank-balance').textContent = sysBankBalance.toFixed(2);
+            document.getElementById('sys-outstanding-checks').textContent = outstandingChecksTotal.toFixed(2);
+            document.getElementById('sys-adjusted-balance').textContent = sysAdjustedBalance.toFixed(2);
+            document.getElementById('bank-adjusted-balance').textContent = bankAdjustedBalance.toFixed(2);
+            // 6. التحقق من التوازن
+            const resultBox = document.getElementById('reconciliation-result');
+            const diff = Math.abs(sysAdjustedBalance - bankAdjustedBalance);
+            if (diff < 0.01) {
+                resultBox.innerHTML = '✅ الحساب البنكي متطابق ومتوازن!';
+                resultBox.style.backgroundColor = '#d1fae5';
+                resultBox.style.color = '#065f46';
+            } else {
+                resultBox.innerHTML = `⚠️ يوجد فرق غير مبرر في التسوية بقيمة: ${diff.toFixed(2)}<br><span style="font-size: 14px; font-weight: normal; color: #b91c1c;">يرجى التحقق من الشيكات المعلقة أو الإيداعات غير المسجلة.</span>`;
+                resultBox.style.backgroundColor = '#fee2e2';
+                resultBox.style.color = '#991b1b';
+            }
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

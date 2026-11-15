@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة المستودعات</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إدارة المستودعات (Warehouses)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openWhModal()">+ إضافة مستودع</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="20%">كود المستودع</th>
+                            <th width="40%">اسم المستودع</th>
+                            <th width="30%">الموقع / الفرع</th>
+                            <th width="10%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wh-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="wh-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة مستودع جديد</h3>
+                <button class="close-btn" onclick="document.getElementById('wh-modal').style.display='none'">×</button>
+            </div>
+            <form id="wh-form" onsubmit="saveWh(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>اسم المستودع</label>
+                        <input type="text" id="wh-name" required placeholder="مثال: معرض الرياض">
+                    </div>
+                    <div class="form-group">
+                        <label>الموقع</label>
+                        <input type="text" id="wh-location" placeholder="مثال: الرياض - طريق الملك فهد">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('wh-modal').style.display='none'">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', renderWhs);
+        function renderWhs() {
+            const tbody = document.getElementById('wh-body');
+            tbody.innerHTML = '';
+            const whs = getWarehouses();
+            whs.forEach(wh => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; font-weight: bold;">${wh.code}</td>
+                        <td style="text-align: right; font-weight: bold;">${wh.name}</td>
+                        <td>${wh.location || '-'}</td>
+                        <td><button class="btn-delete" onclick="deleteWh(${wh.id})">حذف</button></td>
+                    </tr>
+                `;
+            });
+        }
+        function openWhModal() {
+            document.getElementById('wh-modal').style.display = 'flex';
+            document.getElementById('wh-form').reset();
+        }
+        function saveWh(event) {
+            event.preventDefault();
+            const name = document.getElementById('wh-name').value.trim();
+            const location = document.getElementById('wh-location').value.trim();
+            let whs = getWarehouses();
+            const code = `WH-${String(whs.length + 1).padStart(3, '0')}`;
+            whs.push({ id: Date.now(), code, name, location });
+            saveWarehouses(whs);
+            document.getElementById('wh-modal').style.display = 'none';
+            renderWhs();
+        }
+        function deleteWh(id) {
+            if (!confirm('هل أنت متأكد من الحذف (ملاحظة: لن يؤثر على الأصناف الحالية)')) return;
+            let whs = getWarehouses().filter(w => w.id !== id);
+            saveWarehouses(whs);
+            renderWhs();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

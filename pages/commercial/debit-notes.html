@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>الإشعارات المدينة</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .dn-hero { background: linear-gradient(135deg, #0f172a, #b91c1c, #ef4444); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .dn-hero h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .dn-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .dn-table table { width: 100%; border-collapse: collapse; }
+        .dn-table th { background: #f8fafc; padding: 15px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; }
+        .dn-table td { padding: 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .add-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="dn-hero">
+                <div><h2>📄 الإشعارات المدينة (Debit Notes)</h2><p style="margin:5px 0 0 0; opacity:0.9;">تخفيض مستحقات المورد</p></div>
+            </div>
+            <div style="margin-bottom:20px; text-align:left;"><button class="add-btn" onclick="openDNModal()">+ إشعار مدين جديد</button></div>
+            <div class="dn-table">
+                <table>
+                    <thead><tr><th>رقم الإشعار</th><th>التاريخ</th><th>المورد</th><th>الفاتورة الأصلية</th><th>المبلغ (شامل الضريبة)</th><th>السبب</th></tr></thead>
+                    <tbody id="dn-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="dn-modal">
+        <div class="modal-content" style="width: 600px;">
+            <div class="modal-header"><h3>إصدار إشعار مدين للمورد</h3><button class="close-btn" onclick="document.getElementById('dn-modal').style.display='none'">×</button></div>
+            <form onsubmit="saveDN(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom:15px;"><label>اختر فاتورة المشتريات الأصلية</label><select id="dn-invoice" required><option value="">-- اختر الفاتورة --</option></select></div>
+                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
+                        <div class="form-group"><label>قيمة الإشعار (بدون ضريبة)</label><input type="text" inputmode="decimal" id="dn-amount" value="0.00" oninput="calcDNTotal()" required></div>
+                        <div class="form-group"><label>التاريخ</label><input type="date" id="dn-date" required></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:15px;"><label>السبب / البيان</label><input type="text" id="dn-reason" placeholder="مثال: خصم كمية..." required></div>
+                    <div style="background:#fef2f2; padding:15px; border-radius:8px; display:flex; justify-content:space-between;">
+                        <strong>الإجمالي (شامل الضريبة 15%):</strong><strong id="dn-total" style="font-family:monospace; color:#b91c1c; font-size:18px;">0.00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">حفظ وتوليد القيد</button></div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { renderDNs(); });
+        function renderDNs() {
+            const tbody = document.getElementById('dn-body');
+            const dns = getDebitNotes().reverse();
+            if (dns.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد إشعارات مدينة.</td></tr>'; return; }
+            tbody.innerHTML = dns.map(d => `<tr>
+                <td style="font-family:monospace; font-weight:700; color:#b91c1c;">${d.dnNumber}</td>
+                <td>${d.date}</td><td>${d.supplierName}</td><td>${d.invoiceNumber}</td>
+                <td style="font-family:monospace; font-weight:700; color:#ef4444;">${parseFloat(d.total).toFixed(2)}</td>
+                <td>${d.reason}</td>
+            </tr>`).join('');
+        }
+        function openDNModal() {
+            document.getElementById('dn-modal').style.display = 'flex';
+            document.getElementById('dn-date').valueAsDate = new Date();
+            const sel = document.getElementById('dn-invoice');
+            sel.innerHTML = '<option value="">-- اختر الفاتورة --</option>';
+            getPurchases().forEach(i => { sel.innerHTML += `<option value="${i.id}" data-sup="${i.supplierId}" data-supname="${i.supplierName}" data-inv="${i.invoiceNumber}">${i.invoiceNumber} - ${i.supplierName} (${i.total})</option>`; });
+        }
+        function calcDNTotal() {
+            const amount = parseFloat(document.getElementById('dn-amount').value) || 0;
+            const total = amount * 1.15;
+            document.getElementById('dn-total').textContent = total.toFixed(2);
+            return total;
+        }
+        function saveDN(e) {
+            e.preventDefault();
+            const invSel = document.getElementById('dn-invoice');
+            if (!invSel.value) return alert('اختر الفاتورة');
+            const invId = parseInt(invSel.value);
+            const supId = parseInt(invSel.options[invSel.selectedIndex].getAttribute('data-sup'));
+            const supName = invSel.options[invSel.selectedIndex].getAttribute('data-supname');
+            const invNum = invSel.options[invSel.selectedIndex].getAttribute('data-inv');
+            const amount = parseFloat(document.getElementById('dn-amount').value) || 0;
+            const total = amount * 1.15;
+            const vat = total - amount;
+            const date = document.getElementById('dn-date').value;
+            const reason = document.getElementById('dn-reason').value;
+            if (amount <= 0) return alert('أدخل مبلغا صحيحا');
+            const entries = getEntries();
+            const entryNum = `DN-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(), entryNumber: entryNum, date: date,
+                description: `إشعار مدين ${reason} - فاتورة ${invNum} - ${supName}`,
+                lines: [
+                    { accountCode: "2101", accountName: "الموردون", debit: total, credit: 0 },
+                    { accountCode: "1104", accountName: "المخزون", debit: 0, credit: amount },
+                    { accountCode: "1105", accountName: "ضريبة المدخلات", debit: 0, credit: vat }
+                ],
+                totalDebit: total, totalCredit: total, status: 'posted'
+            });
+            saveEntries(entries);
+            updateSupplierBalance(supId, -total);
+            const dns = getDebitNotes();
+            const dnNum = `DN-${new Date().getFullYear()}-${String(dns.length + 1).padStart(4, '0')}`;
+            dns.push({ id: Date.now(), dnNumber: dnNum, date, supplierId: supId, supplierName: supName, invoiceId: invId, invoiceNumber: invNum, amount, vat, total, reason, entryNumber: entryNum });
+            saveDebitNotes(dns);
+            document.getElementById('dn-modal').style.display = 'none';
+            renderDNs();
+            alert(`✅ تم إصدار الإشعار المدين ${dnNum}`);
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

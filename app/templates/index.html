@@ -1,0 +1,312 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AL SHAMEL — النظام المحاسبي المتكامل</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" onclick="switchDashboard()"><span class="brand-mark">O</span><span>ONYX <b>PRO</b></span></a>
+      <nav class="nav-list">
+        <a class="nav-item" href="#" onclick="switchDashboard()"><span>🏠 الرئيسية</span></a>
+        <!-- 1. الإعدادات والتهيئة -->
+        <div class="tree-node" id="node-settings">
+          <div class="nav-item" onclick="toggleTree('node-settings')">
+            <span>⚙️ 1. الإعدادات والتهيئة</span>
+            <span class="toggle-icon">+</span>
+          </div>
+          <div class="tree-children">
+            <a class="sub-item" onclick="loadSetup('general', this)">الإعداد العام والعملات</a>
+            <a class="sub-item" onclick="loadSetup('account_code', this)">اعداد رمز الحساب</a>
+            <a class="sub-item" onclick="loadSetup('cost_center_code', this)">اعداد مراكز التكلفة</a>
+            <a class="sub-item" onclick="loadSetup('ledger_book', this)">اعداد دفتر الحساب</a>
+            <a class="sub-item" onclick="loadSetup('users_security', this)">تغيير الكلمة وصلاحيات المستخدمين</a>
+          </div>
+        </div>
+        <!-- 2. المحاسبة المالية -->
+        <div class="tree-node open" id="node-finance">
+          <div class="nav-item" onclick="toggleTree('node-finance')">
+            <span>💰 2. المحاسبة المالية</span>
+            <span class="toggle-icon">-</span>
+          </div>
+          <div class="tree-children" style="max-height: 900px;">
+            <a class="sub-item active" id="sub-entries" onclick="loadJournalEntries(this)">القيود اليومية والتسويات</a>
+            <a class="sub-item" onclick="loadPlaceholder('سندات القبض والصرف', this)">سندات القبض والصرف</a>
+          </div>
+        </div>
+        <!-- 3. الحسابات والأستاذ العام -->
+        <div class="tree-node" id="node-accounts">
+          <div class="nav-item" onclick="toggleTree('node-accounts')">
+            <span>📊 3. الحسابات والأستاذ</span>
+            <span class="toggle-icon">+</span>
+          </div>
+          <div class="tree-children">
+            <a class="sub-item" onclick="loadPlaceholder('دليل الشجرة المحاسبية', this)">دليل الشجرة المحاسبية</a>
+            <a class="sub-item" onclick="loadPlaceholder('كشف حساب تفصيلي', this)">كشف حساب تفصيلي</a>
+            <a class="sub-item" onclick="loadPlaceholder('ميزان المراجعة', this)">ميزان المراجعة</a>
+          </div>
+        </div>
+        <!-- 4. العمليات التجارية -->
+        <div class="tree-node" id="node-operations">
+          <div class="nav-item" onclick="toggleTree('node-operations')">
+            <span>🛒 4. العمليات التجارية</span>
+            <span class="toggle-icon">+</span>
+          </div>
+          <div class="tree-children">
+            <a class="sub-item" onclick="loadPlaceholder('فواتير المبيعات وعملاء', this)">فواتير المبيعات وعملاء</a>
+            <a class="sub-item" onclick="loadPlaceholder('فواتير المشتريات وموردين', this)">فواتير المشتريات وموردين</a>
+          </div>
+        </div>
+        <!-- 5. المخزون والمستودعات -->
+        <div class="tree-node" id="node-inventory">
+          <div class="nav-item" onclick="toggleTree('node-inventory')">
+            <span>📦 5. المخزون والمستودعات</span>
+            <span class="toggle-icon">+</span>
+          </div>
+          <div class="tree-children">
+            <a class="sub-item" onclick="loadPlaceholder('أرصدة الأصناف والمستودع', this)">أرصدة الأصناف والمستودع</a>
+            <a class="sub-item" onclick="loadPlaceholder('حركة المخزون وسندات الإدخال', this)">حركة المخزون وسندات الإدخال</a>
+          </div>
+        </div>
+        <!-- 6. مراكز التكلفة والميزانية -->
+        <div class="tree-node" id="node-cost">
+          <div class="nav-item" onclick="toggleTree('node-cost')">
+            <span>📐 6. التكلفة والميزانية</span>
+            <span class="toggle-icon">+</span>
+          </div>
+          <div class="tree-children">
+            <a class="sub-item" onclick="loadPlaceholder('تحليلات مراكز التكلفة', this)">تحليلات مراكز التكلفة</a>
+            <a class="sub-item" onclick="loadPlaceholder('الميزانية التقديرية المقارنة', this)">الميزانية التقديرية المقارنة</a>
+          </div>
+        </div>
+        <!-- 7. التقارير المالية الختامية -->
+        <div class="tree-node" id="node-reports">
+          <div class="nav-item" onclick="toggleTree('node-reports')">
+            <span>📈 7. التقارير المالية الختامية</span>
+            <span class="toggle-icon">+</span>
+          </div>
+          <div class="tree-children">
+            <a class="sub-item" onclick="loadPlaceholder('قائمة الأرباح والخسائر', this)">قائمة الدخل (الأرباح والخسائر)</a>
+            <a class="sub-item" onclick="loadPlaceholder('قائمة المركز المالي', this)">قائمة المركز المالي (الميزانية العمومية)</a>
+            <a class="sub-item" onclick="loadPlaceholder('قائمة التدفقات النقدية', this)">قائمة التدفقات النقدية</a>
+          </div>
+        </div>
+      </nav>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="search-box"><span>🔍</span><input type="search" placeholder="بحث في النظام المحاسبي..."></div>
+        <div style="font-weight: 600; font-size: 13px;">OMRAN AQLAN</div>
+      </header>
+      <div class="content">
+        <div id="dashboardView" style="display: none;">
+          <div class="card">
+            <h1 style="color: var(--sidebar-bg); margin-bottom: 8px;">مرحباً بك في النظام المحاسبي المتكامل (AL SHAMEL)</h1>
+            <p style="color: var(--muted);">اختر أي قسم من القائمة الجانبية للبدء.</p>
+          </div>
+        </div>
+        <div id="appContainer">
+          <div class="smacc-header-bar">
+            <div class="smacc-tabs" id="tabsContainer"></div>
+            <button class="btn-action" id="mainActionBtn" onclick="saveAction()">حفظ التغييرات</button>
+          </div>
+          <div class="card" id="cardContent"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    function toggleTree(nodeId) {
+      const node = document.getElementById(nodeId);
+      node.classList.toggle('open');
+      const icon = node.querySelector('.toggle-icon');
+      if(icon) {
+        icon.textContent = node.classList.contains('open') ? '-' : '+';
+      }
+    }
+    function switchDashboard() {
+      document.getElementById('dashboardView').style.display = 'block';
+      document.getElementById('appContainer').style.display = 'none';
+      document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+    }
+    let activeModule = 'entries';
+    // بيانات شاشات الإعدادات (التبويب الأول)
+    const setupData = {
+      'general': { title: '1.1 الإعداد العام والعملات', tabs: ['البيانات الأساسية', 'العملات', 'الضرائب'], html: '<div class="setup-grid"><div class="form-group"><label>اسم الشركة</label><input type="text" value="شركة إيهاب التجارية"></div><div class="form-group"><label>العملة الرئيسية</label><select><option>ريال يمني (YER)</option></select></div></div>' },
+      'account_code': { title: '1.2 اعداد رمز الحساب', tabs: ['مستويات الشجرة', 'الترميز'], html: '<div class="setup-grid"><div class="form-group"><label>مستويات الشجرة</label><input type="number" value="5"></div></div>' },
+      'cost_center_code': { title: '1.3 اعداد مراكز التكلفة', tabs: ['التهيئة'], html: '<div class="setup-grid"><div class="form-group"><label>تفعيل مراكز التكلفة</label><select><option>مفعل</option></select></div></div>' },
+      'ledger_book': { title: '1.4 اعداد دفتر الحساب', tabs: ['الدفاتر'], html: '<div class="setup-grid"><div class="form-group"><label>ترقيم القيود</label><select><option>سنوي متسلسل</option></select></div></div>' },
+      'users_security': { title: '1.5 صلاحيات المستخدمين', tabs: ['الأمن'], html: '<div class="setup-grid"><div class="form-group"><label>المستخدم الحالي</label><input type="text" value="إيهاب" readonly></div></div>' }
+    };
+    function loadSetup(key, element) {
+      activeModule = key;
+      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+      if(element) element.classList.add('active');
+      const data = setupData[key];
+      const tabsContainer = document.getElementById('tabsContainer');
+      tabsContainer.replaceChildren();
+      data.tabs.forEach((t, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'smacc-tab ' + (i === 0 ? 'active' : '');
+        btn.textContent = t;
+        btn.onclick = () => {
+          tabsContainer.querySelectorAll('.smacc-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        };
+        tabsContainer.appendChild(btn);
+      });
+      document.getElementById('cardContent').innerHTML = `
+        <h3 style="margin-bottom: 15px; color: var(--sidebar-bg); font-size: 16px;">${data.title}</h3>
+        ${data.html}
+      `;
+      document.getElementById('mainActionBtn').textContent = 'حفظ الإعدادات';
+      document.getElementById('mainActionBtn').onclick = () => alert('تم حفظ الإعدادات بنجاح!');
+    }
+    // شاشة القيود اليومية والتسويات (التبويب الثاني - مفعلة بالكامل)
+    function loadJournalEntries(element) {
+      activeModule = 'entries';
+      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+      if(element) element.classList.add('active');
+      const tabsContainer = document.getElementById('tabsContainer');
+      tabsContainer.innerHTML = `
+        <button class="smacc-tab active">إدخال قيد يومي جديد</button>
+        <button class="smacc-tab" onclick="alert('شاشة تسوية الإهلاكات والمصروفات')">التسويات الدورية</button>
+        <button class="smacc-tab" onclick="alert('سجل القيود المرحلة')">مراجعة القيود</button>
+      `;
+      document.getElementById('cardContent').innerHTML = `
+        <h3 style="margin-bottom: 15px; color: var(--sidebar-bg); font-size: 16px;">2.1 إدخال قيد يومي مزدوج (مدين / دائن)</h3>
+        <div class="setup-grid">
+          <div class="form-group"><label>رقم القيد الآلي</label><input type="text" value="JV-2026-0001" readonly style="background:#f8fafc;"></div>
+          <div class="form-group"><label>تاريخ القيد</label><input type="date" value="2026-03-30"></div>
+          <div class="form-group"><label>الدفتر المساعد</label><select><option>دفتر القيود العامة</option></select></div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>شرح القيد العام (البيان)</label>
+          <input type="text" placeholder="أدخل بيان تفصيلي لحركة القيد المحاسبي...">
+        </div>
+        <table class="entry-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">رقم الحساب</th>
+              <th style="width: 35%;">اسم الحساب / البيان التحليلي</th>
+              <th style="width: 20%;">مدين</th>
+              <th style="width: 20%;">دائن</th>
+              <th style="width: 10%;">حذف</th>
+            </tr>
+          </thead>
+          <tbody id="linesContainer">
+            <tr>
+              <td><input type="text" value="10101"></td>
+              <td><select><option>10101 - الصندوق الرئيسي</option><option>40101 - إيرادات المبيعات</option></select></td>
+              <td><input type="number" step="0.01" value="0.00" class="debit-input" oninput="calculateTotals()"></td>
+              <td><input type="number" step="0.01" value="0.00" class="credit-input" oninput="calculateTotals()"></td>
+              <td><button class="btn-action btn-danger" onclick="removeRow(this)">حذف</button></td>
+            </tr>
+            <tr>
+              <td><input type="text" value="40101"></td>
+              <td><select><option>40101 - إيرادات المبيعات</option><option>10101 - الصندوق الرئيسي</option></select></td>
+              <td><input type="number" step="0.01" value="0.00" class="debit-input" oninput="calculateTotals()"></td>
+              <td><input type="number" step="0.01" value="0.00" class="credit-input" oninput="calculateTotals()"></td>
+              <td><button class="btn-action btn-danger" onclick="removeRow(this)">حذف</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top: 12px;">
+          <button class="btn-action" onclick="addRow()">+ إضافة سطر جديد للقيد</button>
+        </div>
+        <div class="totals-box">
+          <div>إجمالي المدين: <span id="totalDebit">0.00</span></div>
+          <div>إجمالي الدائن: <span id="totalCredit">0.00</span></div>
+          <div id="balanceBadge" class="balance-status unbalanced">غير متوازن</div>
+        </div>
+      `;
+      document.getElementById('mainActionBtn').textContent = 'ترحيل وحفظ القيد المحاسبي';
+      document.getElementById('mainActionBtn').onclick = saveJournalEntry;
+      calculateTotals();
+    }
+    function loadPlaceholder(title, element) {
+      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+      if(element) element.classList.add('active');
+      document.getElementById('tabsContainer').innerHTML = `<button class="smacc-tab active">${title}</button>`;
+      document.getElementById('cardContent').innerHTML = `
+        <h3 style="margin-bottom: 15px; color: var(--sidebar-bg); font-size: 16px;">${title}</h3>
+        <p style="color: var(--muted);">هذه الشاشة مدرجة ضمن الهيكل العام وسيتم تفعيل واجهاتها التفصيلية في خطوتها المخصصة.</p>
+      `;
+      document.getElementById('mainActionBtn').textContent = 'حفظ البيانات';
+      document.getElementById('mainActionBtn').onclick = () => alert('تم الحفظ بنجاح!');
+    }
+    function addRow() {
+      const tbody = document.getElementById('linesContainer');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" placeholder="رمز الحساب"></td>
+        <td><select><option>10101 - الصندوق الرئيسي</option><option>40101 - إيرادات المبيعات</option></select></td>
+        <td><input type="number" step="0.01" value="0.00" class="debit-input" oninput="calculateTotals()"></td>
+        <td><input type="number" step="0.01" value="0.00" class="credit-input" oninput="calculateTotals()"></td>
+        <td><button class="btn-action btn-danger" onclick="removeRow(this)">حذف</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+    function removeRow(btn) {
+      const tr = btn.closest('tr');
+      if(document.querySelectorAll('#linesContainer tr').length > 2) {
+        tr.remove();
+        calculateTotals();
+      } else {
+        alert('يجب أن يتكون القيد من سطرين على الأقل');
+      }
+    }
+    function calculateTotals() {
+      let totalDebit = 0, totalCredit = 0;
+      document.querySelectorAll('.debit-input').forEach(i => totalDebit += parseFloat(i.value) || 0);
+      document.querySelectorAll('.credit-input').forEach(i => totalCredit += parseFloat(i.value) || 0);
+      document.getElementById('totalDebit').textContent = totalDebit.toFixed(2);
+      document.getElementById('totalCredit').textContent = totalCredit.toFixed(2);
+      const badge = document.getElementById('balanceBadge');
+      if(Math.abs(totalDebit - totalCredit) < 0.001 && totalDebit > 0) {
+        badge.textContent = 'متوازن وجاهز للترحيل';
+        badge.className = 'balance-status balanced';
+      } else {
+        badge.textContent = 'غير متوازن (يجب أن يتساوى المدين والدائن)';
+        badge.className = 'balance-status unbalanced';
+      }
+    }
+    function saveJournalEntry() {
+      const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
+      const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
+      if(Math.abs(totalDebit - totalCredit) >= 0.001 || totalDebit === 0) {
+        alert('خطأ محاسبي: لا يمكن ترحيل قيد غير متوازن أو بقيمة صفر!');
+        return;
+      }
+      alert('تم تدقيق وتوازن القيد بنجاح، وترحيله إلى دفاتر الأستاذ العام!');
+    }
+    window.onload = function() {
+      loadJournalEntries(document.getElementById('sub-entries'));
+    };
+  </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

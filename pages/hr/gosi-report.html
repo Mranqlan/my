@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><title>GOSI</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic&display=swap" rel="stylesheet">
+<style>
+*{font-family:Cairo,sans-serif}
+body{background:#f8fafc;margin:0;margin-right:260px;padding:20px;color:#1e293b}
+h1{background:#0f172a;color:#fff;padding:20px;border-radius:12px;margin:0 0 20px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.c{background:#fff;padding:14px;border-radius:8px;border-right:4px solid #10b981}
+.c .l{font-size:12px;color:#64748b}.c .v{font-size:20px;font-weight:700}
+table{width:100%;border-collapse:collapse;background:#fff}
+th{background:#0f172a;color:#fff;padding:10px;font-size:13px;text-align:right}
+td{padding:8px;border-bottom:1px solid #eee;font-size:13px}
+.b{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.s{background:#d1fae5;color:#065f46}.r{background:#fef3c7;color:#92400e}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+<h1>🏥 تقرير التأمينات GOSI</h1>
+<div class="cards">
+<div class="c"><div class="l">سعوديون</div><div class="v" id="s1">0</div></div>
+<div class="c"><div class="l">حصة الموظف</div><div class="v" id="s2">0</div></div>
+<div class="c"><div class="l">حصة المنشأة</div><div class="v" id="s3">0</div></div>
+<div class="c"><div class="l">الإجمالي</div><div class="v" id="s4">0</div></div>
+</div>
+<table><thead><tr><th>الموظف</th><th>الجنسية</th><th>الأساسي</th><th>السكن</th><th>الوعاء</th><th>موظف</th><th>منشأة</th><th>إجمالي</th></tr></thead><tbody id="tb"></tbody></table>
+<script>
+function load(){
+const es=JSON.parse(localStorage.getItem('employees')||'[]').filter(e=>e.status!=='terminated');
+let sc=0,te=0,tr=0,tt=0;
+document.getElementById('tb').innerHTML=es.map(e=>{
+const g=calculateGOSI(e),isS=(e.nationality||'saudi')==='saudi';
+if(isS)sc++;te+=g.employeeShare;tr+=g.employerShare;tt+=g.total;
+return `<tr><td>${e.name||'-'}</td><td><span class="b ${isS?'s':'r'}">${isS?'سعودي':'مقيم'}</span></td><td>${(parseFloat(e.basicSalary)||0).toLocaleString()}</td><td>${(parseFloat(e.housingAllowance)||0).toLocaleString()}</td><td>${g.base.toLocaleString()}</td><td>${g.employeeShare.toLocaleString()}</td><td>${g.employerShare.toLocaleString()}</td><td style="color:#10b981;font-weight:700">${g.total.toLocaleString()}</td></tr>`;
+}).join('');
+document.getElementById('s1').textContent=sc;
+document.getElementById('s2').textContent=(Math.round(te*100)/100).toLocaleString();
+document.getElementById('s3').textContent=(Math.round(tr*100)/100).toLocaleString();
+document.getElementById('s4').textContent=(Math.round(tt*100)/100).toLocaleString();
+}
+document.addEventListener('DOMContentLoaded',load);
+</script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+    <script src="/assets/js/hr-extended.js?v=777777"></script>
+</body>
+</html>

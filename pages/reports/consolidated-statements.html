@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>القوائم المالية الموحدة | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js?v=777777"></script>
+    <style>
+        .con-hero { background: linear-gradient(135deg, #0f172a, #4338ca, #6366f1); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(99,102,241,0.25); }
+        .con-hero h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-top: 4px solid #cbd5e1; text-align: center; }
+        .kpi-card.rev { border-top-color: #3b82f6; }
+        .kpi-card.exp { border-top-color: #ef4444; }
+        .kpi-card.prof { border-top-color: #10b981; }
+        .kpi-card.marg { border-top-color: #f59e0b; }
+        .kpi-card .lbl { font-size: 13px; color: #64748b; font-weight: 700; margin-bottom: 8px; }
+        .kpi-card .val { font-size: 26px; font-weight: 800; font-family: monospace; color: #0f172a; }
+        .data-card { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 25px; }
+        .data-card-header { padding: 20px; border-bottom: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .data-card-header h3 { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: white; padding: 15px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; border-bottom: 2px solid #e2e8f0; }
+        .data-table td { padding: 14px 15px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .data-table tr:hover td { background: #f8fafc; }
+        .data-table tfoot td { font-weight: 800; font-size: 15px; background: #f8fafc; border-top: 2px solid #cbd5e1; color: #0f172a; }
+        .branch-badge { background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .chart-container { position: relative; height: 350px; padding: 20px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="con-hero">
+                <div>
+                    <h2>📊 القوائم المالية الموحدة وتقرير القطاعات</h2>
+                    <p style="margin:5px 0 0 0; opacity:0.9;">Consolidated Financial Statements & Segment Reporting (متوافق مع SOCPA)</p>
+                </div>
+                <div style="text-align:left;">
+                    <div style="font-size:12px; opacity:0.85;">كما في تاريخ</div>
+                    <div style="font-size:18px; font-weight:800;" id="report-date"></div>
+                </div>
+            </div>
+            <!-- KPI Cards (المجمع) -->
+            <div class="kpi-grid">
+                <div class="kpi-card rev"><div class="lbl">إجمالي الإيرادات الموحدة</div><div class="val" id="tot-rev" style="color:#3b82f6;">0.00</div></div>
+                <div class="kpi-card exp"><div class="lbl">إجمالي المصروفات الموحدة</div><div class="val" id="tot-exp" style="color:#ef4444;">0.00</div></div>
+                <div class="kpi-card prof"><div class="lbl">صافي الربح الموحد</div><div class="val" id="tot-profit" style="color:#10b981;">0.00</div></div>
+                <div class="kpi-card marg"><div class="lbl">هامش الربح الموحد</div><div class="val" id="tot-margin" style="color:#f59e0b;">0%</div></div>
+            </div>
+            <!-- جدول تقرير القطاعات -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h3>🏢 تقرير القطاعات (الأداء المالي لكل فرع)</h3>
+                    <span style="font-size:12px; color:#64748b;">Segment Reporting</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الفرع / القطاع</th>
+                            <th>الإيرادات</th>
+                            <th>المصروفات</th>
+                            <th>صافي الربح</th>
+                            <th>هامش الربح</th>
+                            <th>نسبة المساهمة في الإيرادات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="segment-body"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td>الإجمالي الموحد (Consolidated)</td>
+                            <td id="foot-rev">0.00</td>
+                            <td id="foot-exp">0.00</td>
+                            <td id="foot-profit">0.00</td>
+                            <td id="foot-margin">0%</td>
+                            <td>100%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <!-- رسم بياني للمساهمة -->
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h3>📈 مساهمة كل فرع في الإيرادات الموحدة</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="segmentChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('report-date').textContent = new Date().toLocaleDateString('ar-EG');
+            generateConsolidated();
+        });
+        function generateConsolidated() {
+            const branches = getCostCenters().filter(c => c.type === 'فرع');
+            const allEntries = getEntries();
+            const allInvoices = getInvoices();
+            const allPurchases = getPurchases();
+            let totalRev = 0, totalExp = 0;
+            let chartLabels = [], chartData = [];
+            const tbody = document.getElementById('segment-body');
+            tbody.innerHTML = '';
+            // إذا لم توجد فروع نعتبر "الفرع الرئيسي" هو الكل
+            if (branches.length === 0) {
+                branches.push({ id: 0, name: 'المركز الرئيسي', code: 'BR-000' });
+            }
+            // حساب الإجماليات أولا لحساب النسب
+            branches.forEach(branch => {
+                let branchRev = 0, branchExp = 0;
+                if (branch.id === 0) {
+                    // إذا لم توجد فروع نحسب الكل
+                    allEntries.forEach(e => e.lines.forEach(l => {
+                        if (l.accountCode === '4101' || l.accountCode === '4102') branchRev += (l.credit - l.debit);
+                        if (l.accountCode.startsWith('5')) branchExp += (l.debit - l.credit);
+                    }));
+                } else {
+                    // الفلترة بالوصف (لأن القيود تحتوي على اسم الفرع)
+                    allEntries.forEach(e => {
+                        if (e.description && e.description.includes(branch.name)) {
+                            e.lines.forEach(l => {
+                                if (l.accountCode === '4101' || l.accountCode === '4102') branchRev += (l.credit - l.debit);
+                                if (l.accountCode.startsWith('5')) branchExp += (l.debit - l.credit);
+                            });
+                        }
+                    });
+                    // إضافة فواتير المبيعات إذا لم تكن هناك قيود مرتبطة (احتياط)
+                    if (branchRev === 0) {
+                        allInvoices.filter(i => i.branchName === branch.name).forEach(i => branchRev += parseFloat(i.total || 0) / 1.15);
+                        allPurchases.filter(p => p.branchName === branch.name).forEach(p => branchExp += parseFloat(p.total || 0) / 1.15);
+                    }
+                }
+                totalRev += branchRev;
+                totalExp += branchExp;
+                chartLabels.push(branch.name);
+                chartData.push(branchRev);
+                branch._rev = branchRev;
+                branch._exp = branchExp;
+            });
+            // بناء الجدول
+            branches.forEach(branch => {
+                const rev = branch._rev;
+                const exp = branch._exp;
+                const profit = rev - exp;
+                const margin = rev > 0 ? (profit / rev) * 100 : 0;
+                const share = totalRev > 0 ? (rev / totalRev) * 100 : 0;
+                let profitColor = profit >= 0 ? '#10b981' : '#ef4444';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:800; color:#3730a3;"><span class="branch-badge">${branch.code}</span> ${branch.name}</td>
+                        <td style="font-family:monospace; color:#3b82f6; font-weight:700;">${rev.toFixed(2)}</td>
+                        <td style="font-family:monospace; color:#ef4444; font-weight:700;">${exp.toFixed(2)}</td>
+                        <td style="font-family:monospace; color:${profitColor}; font-weight:800;">${profit.toFixed(2)}</td>
+                        <td style="font-family:monospace; font-weight:700;">${margin.toFixed(1)}%</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="flex:1; background:#e2e8f0; height:8px; border-radius:10px; overflow:hidden;">
+                                    <div style="width:${share}%; background:#6366f1; height:100%;"></div>
+                                </div>
+                                <span style="font-size:12px; font-weight:bold; color:#64748b;">${share.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            // الإجماليات
+            const totalProfit = totalRev - totalExp;
+            const totalMargin = totalRev > 0 ? (totalProfit / totalRev) * 100 : 0;
+            document.getElementById('tot-rev').textContent = totalRev.toFixed(2);
+            document.getElementById('tot-exp').textContent = totalExp.toFixed(2);
+            document.getElementById('tot-profit').textContent = totalProfit.toFixed(2);
+            document.getElementById('tot-profit').style.color = totalProfit >= 0 ? '#10b981' : '#ef4444';
+            document.getElementById('tot-margin').textContent = totalMargin.toFixed(1) + '%';
+            document.getElementById('foot-rev').textContent = totalRev.toFixed(2);
+            document.getElementById('foot-exp').textContent = totalExp.toFixed(2);
+            document.getElementById('foot-profit').textContent = totalProfit.toFixed(2);
+            document.getElementById('foot-margin').textContent = totalMargin.toFixed(1) + '%';
+            renderChart(chartLabels, chartData);
+        }
+        let chartInstance = null;
+        function renderChart(labels, data) {
+            if (chartInstance) chartInstance.destroy();
+            const ctx = document.getElementById('segmentChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                        borderWidth: 3, borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '60%',
+                    plugins: { legend: { position: 'right', labels: { font: { size: 13, weight: 'bold' } } } }
+                }
+            });
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>عروض الأسعار | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .q-hero { background: linear-gradient(135deg, #0f172a, #0891b2, #06b6d4); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .q-hero h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .q-hero .stat-box { background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px; text-align: center; }
+        .q-hero .stat-box .val { font-size: 22px; font-weight: 800; font-family: monospace; }
+        .q-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .q-table table { width: 100%; border-collapse: collapse; }
+        .q-table th { background: #f8fafc; padding: 15px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; }
+        .q-table td { padding: 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .status-pending { background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-accepted { background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-converted { background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-rejected { background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .action-btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; margin: 0 2px; }
+        .btn-convert { background: #06b6d4; color: white; }
+        .btn-view { background: #3b82f6; color: white; }
+        .btn-cancel { background: #ef4444; color: white; }
+        .add-btn { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(6,182,212,0.3); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="q-hero">
+                <div><h2>📄 عروض الأسعار (Quotations)</h2><p style="margin:5px 0 0 0; opacity:0.9;">عروض تجارية للعملاء - لا تؤثر على القوائم المالية</p></div>
+                <div class="stat-box"><div style="font-size:11px; opacity:0.85;">إجمالي العروض</div><div class="val" id="q-count">0</div></div>
+            </div>
+            <div style="margin-bottom:20px; text-align:left;">
+                <button class="add-btn" onclick="openQuoteModal()">+ عرض سعر جديد</button>
+            </div>
+            <div class="q-table">
+                <table>
+                    <thead><tr><th>رقم العرض</th><th>التاريخ</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                    <tbody id="q-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="q-modal">
+        <div class="modal-content" style="width: 850px;">
+            <div class="modal-header"><h3>عرض سعر جديد</h3><button class="close-btn" onclick="document.getElementById('q-modal').style.display='none'">×</button></div>
+            <form onsubmit="saveQuote(event)">
+                <div class="modal-body">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:15px;">
+                        <div class="form-group"><label>العميل</label><select id="q-customer" required></select></div>
+                        <div class="form-group"><label>التاريخ</label><input type="date" id="q-date" required></div>
+                    </div>
+                    <table class="data-table" style="margin-bottom:10px;">
+                        <thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>إجراء</th></tr></thead>
+                        <tbody id="q-items"></tbody>
+                    </table>
+                    <button type="button" class="btn btn-secondary" onclick="addQRow()">+ إضافة صنف</button>
+                    <div style="background:#f8fafc; padding:15px; border-radius:8px; margin-top:15px; display:flex; justify-content:space-between;">
+                        <strong>الإجمالي:</strong><strong id="q-total" style="font-family:monospace; color:#0891b2; font-size:18px;">0.00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('q-modal').style.display='none'">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ العرض</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { renderQuotes(); });
+        function renderQuotes() {
+            const tbody = document.getElementById('q-body');
+            const quotes = getQuotations().slice().reverse();
+            document.getElementById('q-count').textContent = quotes.length;
+            if (quotes.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد عروض أسعار بعد.</td></tr>'; return; }
+            tbody.innerHTML = quotes.map(q => {
+                let badge = '';
+                if (q.status === 'pending') badge = '<span class="status-pending">⏳ معلق</span>';
+                else if (q.status === 'accepted') badge = '<span class="status-accepted">✅ مقبول</span>';
+                else if (q.status === 'converted') badge = '<span class="status-converted">📄 محول لفاتورة</span>';
+                else if (q.status === 'rejected') badge = '<span class="status-rejected">❌ مرفوض</span>';
+                return `<tr>
+                    <td style="font-family:monospace; font-weight:700; color:#0891b2;">${q.quoteNumber}</td>
+                    <td>${q.date}</td>
+                    <td>${q.customerName}</td>
+                    <td style="font-family:monospace; font-weight:700;">${parseFloat(q.total).toFixed(2)}</td>
+                    <td>${badge}</td>
+                    <td>
+                        ${q.status === 'pending' ? `<button class="action-btn btn-convert" onclick="convertToInvoice(${q.id})">تحويل لفاتورة</button>` : ''}
+                        <button class="action-btn btn-cancel" onclick="deleteQuote(${q.id})">حذف</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        function openQuoteModal() {
+            document.getElementById('q-modal').style.display = 'flex';
+            document.getElementById('q-date').valueAsDate = new Date();
+            const sel = document.getElementById('q-customer');
+            sel.innerHTML = '<option value="">-- اختر --</option>';
+            getCustomers().forEach(c => { sel.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.code} - ${c.name}</option>`; });
+            document.getElementById('q-items').innerHTML = '';
+            addQRow();
+        }
+        function addQRow() {
+            const tr = document.createElement('tr');
+            const opts = getItems().map(i => `<option value="${i.id}" data-price="${i.salePrice}" data-name="${i.name}">${i.name}</option>`).join('');
+            tr.innerHTML = `<td><select class="q-item" style="width:100%;padding:6px;"><option value="">-- اختر --</option>${opts}</select></td>
+                <td><input type="number" class="q-qty" value="1" min="1" style="width:100%;text-align:center;" oninput="calcQTotal()"></td>
+                <td><input type="number" class="q-price" step="0.01" style="width:100%;text-align:center;" oninput="calcQTotal()"></td>
+                <td><button type="button" class="action-btn btn-cancel" onclick="this.closest('tr').remove(); calcQTotal();">×</button></td>`;
+            document.getElementById('q-items').appendChild(tr);
+            tr.querySelector('.q-item').addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                tr.querySelector('.q-price').value = opt.getAttribute('data-price') || 0;
+                calcQTotal();
+            });
+        }
+        function calcQTotal() {
+            let total = 0;
+            document.querySelectorAll('#q-items tr').forEach(tr => {
+                const q = parseFloat(tr.querySelector('.q-qty').value) || 0;
+                const p = parseFloat(tr.querySelector('.q-price').value) || 0;
+                total += q * p;
+            });
+            document.getElementById('q-total').textContent = total.toFixed(2);
+            return total;
+        }
+        function saveQuote(e) {
+            e.preventDefault();
+            const custSel = document.getElementById('q-customer');
+            if (!custSel.value) return alert('اختر العميل');
+            const custName = custSel.options[custSel.selectedIndex].getAttribute('data-name');
+            const total = calcQTotal();
+            if (total <= 0) return alert('أضف أصنافاً');
+            let items = [];
+            document.querySelectorAll('#q-items tr').forEach(tr => {
+                const sel = tr.querySelector('.q-item');
+                if (!sel.value) return;
+                items.push({ itemId: parseInt(sel.value), itemName: sel.options[sel.selectedIndex].getAttribute('data-name'), qty: parseFloat(tr.querySelector('.q-qty').value) || 0, price: parseFloat(tr.querySelector('.q-price').value) || 0 });
+            });
+            const quotes = getQuotations();
+            const qNum = `QT-${new Date().getFullYear()}-${String(quotes.length + 1).padStart(4, '0')}`;
+            quotes.push({ id: Date.now(), quoteNumber: qNum, customerId: parseInt(custSel.value), customerName: custName, date: document.getElementById('q-date').value, total, items, status: 'pending' });
+            saveQuotations(quotes);
+            document.getElementById('q-modal').style.display = 'none';
+            renderQuotes();
+            alert(`✅ تم حفظ العرض ${qNum}`);
+        }
+        function convertToInvoice(id) {
+            if (!confirm('تحويل العرض إلى فاتورة مبيعات؟')) return;
+            let quotes = getQuotations();
+            let q = quotes.find(x => x.id === id);
+            if (!q) return;
+            q.status = 'converted';
+            saveQuotations(quotes);
+            window.location.href = '/pages/commercial/sales-invoices.html?quote_id=' + id;
+        }
+        function deleteQuote(id) {
+            if (!confirm('حذف العرض نهائياً؟')) return;
+            saveQuotations(getQuotations().filter(q => q.id !== id));
+            renderQuotes();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

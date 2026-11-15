@@ -1,0 +1,272 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام الموارد البشرية</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; }
+        .tab { padding: 12px 20px; cursor: pointer; font-weight: bold; color: var(--text-light); border-bottom: 3px solid transparent; }
+        .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>نظام الموارد البشرية (HR)</h2>
+                <div class="header-actions">
+                    <a href="/pages/hr/payroll.html" class="btn btn-success">💵 الانتقال لمسير الرواتب</a>
+                </div>
+            </div>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('tab-emps')">👥 الموظفين</div>
+                <div class="tab" onclick="switchTab('tab-advances')">💰 السلف</div>
+                <div class="tab" onclick="switchTab('tab-penalties')">⚖️ الخصومات والجزاءات</div>
+            </div>
+            <!-- تبويب الموظفين -->
+            <div id="tab-emps" class="tab-content active">
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <button class="btn btn-primary" onclick="openEmpModal()">+ إضافة موظف</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الكود</th><th>الاسم</th><th>المسمى الوظيفي</th><th>الفرع</th><th>الراتب الأساسي</th><th>البدلات</th><th>نسبة التأمين (%)</th><th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emp-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- تبويب السلف -->
+            <div id="tab-advances" class="tab-content">
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <button class="btn btn-primary" onclick="openAdvModal()">+ إضافة سلفة</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th><th>الموظف</th><th>المبلغ</th><th>ملاحظات</th><th>الحالة</th><th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adv-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- تبويب الخصومات -->
+            <div id="tab-penalties" class="tab-content">
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <button class="btn btn-primary" onclick="openPenModal()">+ إضافة خصم</button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th><th>الموظف</th><th>المبلغ</th><th>السبب</th><th>الحالة</th><th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pen-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- نوافذ الإضافة -->
+    <div class="modal-overlay" id="emp-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>إضافة موظف</h3><button class="close-btn" onclick="closeModal('emp-modal')">×</button></div>
+            <form id="emp-form" onsubmit="saveEmp(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;"><label>الاسم</label><input type="text" id="emp-name" required></div>
+                    <div class="form-group" style="margin-bottom: 15px;"><label>المسمى الوظيفي</label><select id="emp-jobtitle" required><option value="مدير عام">مدير عام</option><option value="مدير مالي">مدير مالي</option><option value="محاسب">محاسب</option><option value="مدير موارد بشرية">مدير موارد بشرية</option><option value="مدير مبيعات">مدير مبيعات</option><option value="مندوب مبيعات">مندوب مبيعات</option><option value="مدير مشتريات">مدير مشتريات</option><option value="أمين مخزن">أمين مخزن</option><option value="عامل / فني">عامل / فني</option></select></div>
+                    <div class="form-group" style="margin-bottom: 15px;"><label>الفرع / القسم</label><select id="emp-branch" required></select></div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;"><label>الراتب الأساسي</label><input type="text" inputmode="decimal" id="emp-base" value="0.00" required></div>
+                        <div class="form-group" style="flex: 1;"><label>البدلات</label><input type="text" inputmode="decimal" id="emp-allow" value="0.00" required></div>
+                    </div>
+                    <div class="form-group"><label>نسبة الاستقطاع (تأمينات/ضرائب) %</label><input type="text" inputmode="decimal" id="emp-ded" value="0" required></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeModal('emp-modal')">إلغاء</button><button type="submit" class="btn btn-success">حفظ</button></div>
+            </form>
+        </div>
+    </div>
+    <div class="modal-overlay" id="adv-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>إضافة سلفة</h3><button class="close-btn" onclick="closeModal('adv-modal')">×</button></div>
+            <form id="adv-form" onsubmit="saveAdv(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;"><label>الموظف</label><select id="adv-emp" required></select></div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;"><label>التاريخ</label><input type="date" id="adv-date" required></div>
+                        <div class="form-group" style="flex: 1;"><label>المبلغ</label><input type="text" inputmode="decimal" id="adv-amount" value="0.00" required></div>
+                    </div>
+                    <div class="form-group"><label>ملاحظات</label><input type="text" id="adv-notes"></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeModal('adv-modal')">إلغاء</button><button type="submit" class="btn btn-success">حفظ</button></div>
+            </form>
+        </div>
+    </div>
+    <div class="modal-overlay" id="pen-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>إضافة خصم / جزاء</h3><button class="close-btn" onclick="closeModal('pen-modal')">×</button></div>
+            <form id="pen-form" onsubmit="savePen(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;"><label>الموظف</label><select id="pen-emp" required></select></div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;"><label>التاريخ</label><input type="date" id="pen-date" required></div>
+                        <div class="form-group" style="flex: 1;"><label>المبلغ</label><input type="text" inputmode="decimal" id="pen-amount" value="0.00" required></div>
+                    </div>
+                    <div class="form-group"><label>سبب الخصم</label><input type="text" id="pen-notes" placeholder="مثال: غياب تأخير..."></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="closeModal('pen-modal')">إلغاء</button><button type="submit" class="btn btn-success">حفظ</button></div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderEmps();
+            renderAdvs();
+            renderPens();
+        });
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        // --- الموظفين ---
+        function renderEmps() {
+            const tbody = document.getElementById('emp-body');
+            tbody.innerHTML = '';
+            getEmployees().forEach(emp => {
+                tbody.innerHTML += `<tr>
+                    <td>${emp.code}</td><td style="text-align:right">${emp.name}</td><td>${emp.jobTitle || "غير محدد"}</td><td>${emp.branchName}</td>
+                    <td>${parseFloat(emp.base).toFixed(2)}</td><td>${parseFloat(emp.allow).toFixed(2)}</td><td style="color:red">${emp.ded}%</td>
+                    <td><button class="btn-delete" onclick="deleteEmp(${emp.id})">حذف</button></td>
+                </tr>`;
+            });
+        }
+        function openEmpModal() {
+            document.getElementById('emp-modal').style.display = 'flex';
+            document.getElementById('emp-form').reset();
+            const select = document.getElementById('emp-branch');
+            select.innerHTML = '';
+            getCostCenters().forEach(c => select.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`);
+        }
+        function saveEmp(e) {
+            e.preventDefault();
+            let emps = getEmployees();
+            const branchSelect = document.getElementById('emp-branch');
+            emps.push({
+                id: Date.now(), code: `EMP-${String(emps.length + 1).padStart(3, '0')}`,
+                name: document.getElementById('emp-name').value,
+                jobTitle: document.getElementById('emp-jobtitle').value,
+                branchId: parseInt(branchSelect.value), branchName: branchSelect.options[branchSelect.selectedIndex].getAttribute('data-name'),
+                base: parseFloat(document.getElementById('emp-base').value), allow: parseFloat(document.getElementById('emp-allow').value), ded: parseFloat(document.getElementById('emp-ded').value)
+            });
+            saveEmployees(emps); closeModal('emp-modal'); renderEmps();
+        }
+        function deleteEmp(id) {
+            if(!confirm('تأكيد الحذف')) return;
+            saveEmployees(getEmployees().filter(e => e.id !== id)); renderEmps();
+        }
+        // --- السلف ---
+        function renderAdvs() {
+            const tbody = document.getElementById('adv-body');
+            tbody.innerHTML = '';
+            getAdvances().reverse().forEach(adv => {
+                let status = adv.status === 'paid' ? '<span style="color:green;font-weight:bold">تم الخصم</span>' : '<span style="color:orange;font-weight:bold">معلقة</span>';
+                tbody.innerHTML += `<tr>
+                    <td>${adv.date}</td><td style="text-align:right">${adv.empName}</td><td>${parseFloat(adv.amount).toFixed(2)}</td>
+                    <td>${adv.notes || '-'}</td><td>${status}</td>
+                    <td>${adv.status === 'pending' ? `<button class="btn-delete" onclick="deleteAdv(${adv.id})">إلغاء</button>` : '-'}</td>
+                </tr>`;
+            });
+        }
+        function openAdvModal() {
+            document.getElementById('adv-modal').style.display = 'flex';
+            document.getElementById('adv-form').reset();
+            document.getElementById('adv-date').valueAsDate = new Date();
+            const select = document.getElementById('adv-emp');
+            select.innerHTML = '';
+            getEmployees().forEach(e => select.innerHTML += `<option value="${e.id}" data-name="${e.name}">${e.name}</option>`);
+        }
+        function saveAdv(e) {
+            e.preventDefault();
+            let advs = getAdvances();
+            const select = document.getElementById('adv-emp');
+            advs.push({
+                id: Date.now(), empId: parseInt(select.value), empName: select.options[select.selectedIndex].getAttribute('data-name'),
+                date: document.getElementById('adv-date').value, amount: parseFloat(document.getElementById('adv-amount').value),
+                notes: document.getElementById('adv-notes').value, status: 'pending'
+            });
+            saveAdvances(advs); closeModal('adv-modal'); renderAdvs();
+        }
+        function deleteAdv(id) {
+            if(!confirm('تأكيد الحذف')) return;
+            saveAdvances(getAdvances().filter(a => a.id !== id)); renderAdvs();
+        }
+        // --- الخصومات ---
+        function renderPens() {
+            const tbody = document.getElementById('pen-body');
+            tbody.innerHTML = '';
+            getPenalties().reverse().forEach(pen => {
+                let status = pen.status === 'paid' ? '<span style="color:green;font-weight:bold">تم الخصم</span>' : '<span style="color:orange;font-weight:bold">معلقة</span>';
+                tbody.innerHTML += `<tr>
+                    <td>${pen.date}</td><td style="text-align:right">${pen.empName}</td><td>${parseFloat(pen.amount).toFixed(2)}</td>
+                    <td>${pen.notes || '-'}</td><td>${status}</td>
+                    <td>${pen.status === 'pending' ? `<button class="btn-delete" onclick="deletePen(${pen.id})">إلغاء</button>` : '-'}</td>
+                </tr>`;
+            });
+        }
+        function openPenModal() {
+            document.getElementById('pen-modal').style.display = 'flex';
+            document.getElementById('pen-form').reset();
+            document.getElementById('pen-date').valueAsDate = new Date();
+            const select = document.getElementById('pen-emp');
+            select.innerHTML = '';
+            getEmployees().forEach(e => select.innerHTML += `<option value="${e.id}" data-name="${e.name}">${e.name}</option>`);
+        }
+        function savePen(e) {
+            e.preventDefault();
+            let pens = getPenalties();
+            const select = document.getElementById('pen-emp');
+            pens.push({
+                id: Date.now(), empId: parseInt(select.value), empName: select.options[select.selectedIndex].getAttribute('data-name'),
+                date: document.getElementById('pen-date').value, amount: parseFloat(document.getElementById('pen-amount').value),
+                notes: document.getElementById('pen-notes').value, status: 'pending'
+            });
+            savePenalties(pens); closeModal('pen-modal'); renderPens();
+        }
+        function deletePen(id) {
+            if(!confirm('تأكيد الحذف')) return;
+            savePenalties(getPenalties().filter(p => p.id !== id)); renderPens();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+    <script src="/assets/js/hr-extended.js?v=777777"></script>
+</body>
+</html>

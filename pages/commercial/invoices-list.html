@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سجل فواتير المبيعات</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        /* تصميم الطباعة */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+            .no-print { display: none !important; }
+            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: right; }
+            .print-table th { background-color: #f2f2f2; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header no-print">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area no-print">
+            <div class="page-header">
+                <h2>سجل فواتير المبيعات</h2>
+                <div class="header-actions">
+                    <a href="sales-invoices.html" class="btn btn-primary">+ فاتورة جديدة</a>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>الإجمالي</th>
+                            <th>العملة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoices-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة معاينة وطباعة الفاتورة -->
+    <div class="modal-overlay no-print" id="print-modal">
+        <div class="modal-content" style="width: 800px; max-width: 95%;">
+            <div class="modal-header">
+                <h3>معاينة الفاتورة</h3>
+                <button class="close-btn" onclick="document.getElementById('print-modal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body" style="background: #f1f5f9; padding: 20px; max-height: 70vh; overflow-y: auto;">
+                <div id="print-area" style="background: white; padding: 30px; border-radius: 8px;">
+                    <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 15px; margin-bottom: 20px;">
+                        <h2 style="color: #1e293b; margin: 0;"><span class="dynamic-company-name">شركة AL SHAMEL للمحاسبة</span></h2>
+                        <p style="color: #64748b; margin: 5px 0;">فاتورة مبيعات رسمية</p>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div><strong>رقم الفاتورة:</strong> <span id="p-inv-num"></span></div>
+                        <div><strong>التاريخ:</strong> <span id="p-inv-date"></span></div>
+                    </div>
+                    <div style="margin-bottom: 20px;"><strong>العميل:</strong> <span id="p-inv-customer"></span></div>
+                    <table class="print-table">
+                        <thead>
+                            <tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th>
+                            <th>العملة</th></tr>
+                        </thead>
+                        <tbody id="p-inv-items"></tbody>
+                    </table>
+                    <div style="margin-top: 20px; text-align: left; font-size: 16px;">
+                        <div style="margin-bottom: 5px;"><strong>الإجمالي (بدون ضريبة):</strong> <span id="p-inv-subtotal"></span></div>
+                        <div style="margin-bottom: 5px;"><strong>الضريبة (15%):</strong> <span id="p-inv-vat"></span></div>
+                        <div style="font-size: 18px; font-weight: bold; color: #1e293b;"><strong>الإجمالي النهائي:</strong> <span id="p-inv-total"></span></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <img id="qr-code-img" src="" alt="QR Code" style="width: 100px; height: 100px; border: 1px solid #ccc; padding: 5px;">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+                        <div style="text-align: center; width: 150px; border-top: 1px solid #000; padding-top: 10px;">توقيع المحاسب</div>
+                        <div style="text-align: center; width: 150px; border-top: 1px solid #000; padding-top: 10px;">توقيع العميل</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('print-modal').style.display='none'">إغلاق</button>
+                <button class="btn btn-success" onclick="window.print()">🖨️ طباعة الفاتورة</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('invoices-body');
+            const invoices = getInvoices();
+            if(invoices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد فواتير مسجلة.</td></tr>';
+            } else {
+                invoices.reverse().forEach(inv => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:bold;">${inv.invoiceNumber}</td>
+                            <td>${inv.date}</td>
+                            <td style="text-align:right;">${inv.customerName}</td>
+                            <td class="text-debit">${inv.total.toFixed(2)}</td>
+                            <td>${inv.currency && inv.currency !== 'SAR' ? `<span class="currency-badge" style="background:#dbeafe;color:#1e40af;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:800;">${inv.currency}</span>` : (inv.currency || 'SAR')}</td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="printInvoice(${inv.id})">🖨️ طباعة</button>
+                            </td>
+                        </tr>`;
+                });
+            }
+        });
+        function printInvoice(id) {
+            const invoice = getInvoices().find(i => i.id === id);
+            if(!invoice) return alert('الفاتورة غير موجودة');
+            document.getElementById('p-inv-num').textContent = invoice.invoiceNumber;
+            document.getElementById('p-inv-date').textContent = invoice.date;
+            document.getElementById('p-inv-customer').textContent = invoice.customerName;
+            const itemsBody = document.getElementById('p-inv-items');
+            itemsBody.innerHTML = '';
+            let subtotal = 0;
+            if (invoice.items && invoice.items.length > 0) {
+                invoice.items.forEach(item => {
+                    const itemTotal = item.qty * item.price;
+                    subtotal += itemTotal;
+                    itemsBody.innerHTML += `<tr><td>${item.itemName}</td><td>${item.qty}</td><td>${parseFloat(item.price).toFixed(2)}</td><td>${itemTotal.toFixed(2)}</td></tr>`;
+                });
+            } else {
+                itemsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد تفاصيل للأصناف (فاتورة قديمة)</td></tr>';
+                subtotal = invoice.total / 1.15; // محاولة استنتاج قيمة البيع
+            }
+            const vat = invoice.total - subtotal;
+            document.getElementById('p-inv-subtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('p-inv-vat').textContent = vat.toFixed(2);
+            document.getElementById('p-inv-total').textContent = invoice.total.toFixed(2);
+            // توليد QR Code يحتوي على بيانات الفاتورة
+            const qrData = `Invoice: ${invoice.invoiceNumber}\nDate: ${invoice.date}\nTotal: ${invoice.total}\nVAT: ${(invoice.total * 0.15 / 1.15).toFixed(2)}`;
+            document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+            document.getElementById('print-modal').style.display = 'flex';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

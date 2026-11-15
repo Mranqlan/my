@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مخصص الديون المشكوك في تحصيلها</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>مخصص الديون المشكوك في تحصيلها (Bad Debt Provision)</h2>
+            </div>
+            <div class="filter-bar" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; border: 1px solid var(--border-color);">
+                <label style="font-weight: 700;">نسبة المخصص للديون (أكثر من 90 يوم) %:</label>
+                <input type="text" inputmode="decimal" id="prov-percentage" value="10" oninput="calculateProvision()" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; width: 100px; text-align: center;">
+                <button class="btn btn-primary" onclick="calculateProvision()">تحديث الحساب</button>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>اسم العميل</th>
+                            <th>إجمالي الدين الحالي</th>
+                            <th>الدين المتأخر (أكثر من 90 يوم)</th>
+                            <th>قيمة المخصص المحتسب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="provision-body"></tbody>
+                    <tfoot>
+                        <tr style="background-color: #f8fafc; font-weight: bold;">
+                            <td colspan="3" style="text-align: left;">إجمالي المخصص المطلوب:</td>
+                            <td id="total-provision" style="color: #ef4444; font-family: monospace; font-size: 18px;">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div style="margin-top: 20px; text-align: left;">
+                <button class="btn btn-danger" style="padding: 15px 30px; font-size: 18px;" onclick="saveProvisionEntry()">توليد قيد المخصص المحاسبي</button>
+            </div>
+        </section>
+    </main>
+    <script>
+        let provisionData = [];
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateProvision();
+        });
+        function calculateProvision() {
+            const percentage = parseFloat(document.getElementById('prov-percentage').value) || 0;
+            const invoices = getInvoices();
+            const returns = getSalesReturns();
+            const today = new Date();
+            let customersData = {};
+            invoices.forEach(inv => {
+                const invDate = new Date(inv.date);
+                const diffTime = Math.abs(today - invDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                // حساب المرتجعات
+                let invoiceReturns = returns ? returns.filter(r => r.invoiceId === inv.id) : [];
+                let totalReturns = invoiceReturns.reduce((sum, r) => sum + r.total, 0);
+                let netAmount = inv.total - totalReturns;
+                if (netAmount <= 0) return; // إذا سدد أو تم إرجاع الفاتورة
+                if (!customersData[inv.customerName]) {
+                    customersData[inv.customerName] = { totalDebt: 0, oldDebt: 0 };
+                }
+                customersData[inv.customerName].totalDebt += netAmount;
+                // إذا كان الدين أقدم من 90 يوم
+                if (diffDays > 90) {
+                    customersData[inv.customerName].oldDebt += netAmount;
+                }
+            });
+            const tbody = document.getElementById('provision-body');
+            tbody.innerHTML = '';
+            provisionData = [];
+            let totalProvision = 0;
+            let hasData = false;
+            for (const [name, data] of Object.entries(customersData)) {
+                if (data.oldDebt > 0) {
+                    hasData = true;
+                    const provAmount = data.oldDebt * (percentage / 100);
+                    totalProvision += provAmount;
+                    provisionData.push({ name, provAmount });
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="text-align: right; font-weight: bold;">${name}</td>
+                            <td style="font-family: monospace;">${data.totalDebt.toFixed(2)}</td>
+                            <td style="font-family: monospace; color: #ef4444;">${data.oldDebt.toFixed(2)}</td>
+                            <td style="font-family: monospace; font-weight: bold;">${provAmount.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            }
+            if (!hasData) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">لا توجد ديون متأخرة أكثر من 90 يوما حاليا.</td></tr>';
+            }
+            document.getElementById('total-provision').textContent = totalProvision.toFixed(2);
+        }
+        function saveProvisionEntry() {
+            const totalProvision = parseFloat(document.getElementById('total-provision').textContent) || 0;
+            if (totalProvision <= 0) return alert('لا يوجد مخصص لتسجيله.');
+            if (!confirm(`هل أنت متأكد من إثبات مخصص بقيمة ${totalProvision.toFixed(2)} سيتم إنشاء قيد محاسبي.`)) return;
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            const date = new Date().toISOString().split('T')[0];
+            // القيد: (مدين: مصروف ديون مشكوك فيها 5108 / دائن: مخصص ديون مشكوك فيها 1107)
+            entries.push({
+                id: Date.now(),
+                entryNumber: entryNumber,
+                date: date,
+                description: `تكوين مخصص ديون مشكوك في تحصيلها (بنسبة انحراف 90 يوم)`,
+                lines: [
+                    { accountCode: "5108", accountName: "مصروف ديون مشكوك في تحصيلها", debit: totalProvision, credit: 0 },
+                    { accountCode: "1107", accountName: "مخصص ديون مشكوك في تحصيلها", debit: 0, credit: totalProvision }
+                ],
+                totalDebit: totalProvision,
+                totalCredit: totalProvision
+            });
+            saveEntries(entries);
+            alert(`تم تسجيل القيد ${entryNumber} بنجاح!`);
+            window.location.href = '/pages/financial/review-entries.html';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

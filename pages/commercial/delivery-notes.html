@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>أذون التسليم | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .dn-hero { background: linear-gradient(135deg, #0f172a, #ea580c, #f97316); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .dn-hero h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .dn-hero .stat-box { background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px; text-align: center; margin-right: 10px; }
+        .dn-hero .stat-box .val { font-size: 22px; font-weight: 800; font-family: monospace; }
+        .dn-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .dn-table table { width: 100%; border-collapse: collapse; }
+        .dn-table th { background: #f8fafc; padding: 15px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; }
+        .dn-table td { padding: 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .status-pending { background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .status-invoiced { background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .action-btn { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; margin: 0 2px; }
+        .btn-convert { background: #f97316; color: white; }
+        .btn-cancel { background: #ef4444; color: white; }
+        .add-btn { background: linear-gradient(135deg, #ea580c, #f97316); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(234,88,12,0.3); }
+        .info-banner { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: #9a3412; line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="dn-hero">
+                <div><h2>🚚 أذون التسليم (Delivery Notes)</h2><p style="margin:5px 0 0 0; opacity:0.9;">تسليم البضاعة للعملاء - يُسجل تكلفة البضاعة المباعة</p></div>
+                <div style="display:flex;">
+                    <div class="stat-box"><div style="font-size:11px; opacity:0.85;">الإجمالي</div><div class="val" id="dn-count">0</div></div>
+                    <div class="stat-box"><div style="font-size:11px; opacity:0.85;">غير مفوترة</div><div class="val" id="dn-pending">0</div></div>
+                </div>
+            </div>
+            <div class="info-banner">
+                <strong>📌 قيد محاسبي تلقائي:</strong> عند حفظ إذن التسليم، سيتم تسجيل قيد تكلفة البضاعة المباعة:
+                <br>🔻 <strong>مدين:</strong> تكلفة البضاعة المباعة (5104) &nbsp;|&nbsp; 🔺 <strong>دائن:</strong> المخزون (1104) - <em>بالتكلفة فقط</em>
+                <br>ثم عند تحويله إلى فاتورة، يتم تسجيل الإيراد والضريبة فقط (بدون تكرار التكلفة).
+            </div>
+            <div style="margin-bottom:20px; text-align:left;">
+                <button class="add-btn" onclick="openDNModal()">+ إذن تسليم جديد</button>
+            </div>
+            <div class="dn-table">
+                <table>
+                    <thead><tr><th>رقم الإذن</th><th>التاريخ</th><th>العميل</th><th>التكلفة</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                    <tbody id="dn-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="dn-modal">
+        <div class="modal-content" style="width: 850px;">
+            <div class="modal-header"><h3>إذن تسليم جديد</h3><button class="close-btn" onclick="document.getElementById('dn-modal').style.display='none'">×</button></div>
+            <form onsubmit="saveDN(event)">
+                <div class="modal-body">
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:15px;">
+                        <div class="form-group"><label>العميل</label><select id="dn-customer" required></select></div>
+                        <div class="form-group"><label>التاريخ</label><input type="date" id="dn-date" required></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:15px;">
+                        <label>المستودع المصدر</label><select id="dn-warehouse" required></select>
+                    </div>
+                    <table class="data-table" style="margin-bottom:10px;">
+                        <thead><tr><th>الصنف</th><th>الكمية</th><th>التكلفة (للمخزون)</th><th>إجراء</th></tr></thead>
+                        <tbody id="dn-items"></tbody>
+                    </table>
+                    <button type="button" class="btn btn-secondary" onclick="addDNRow()">+ إضافة صنف</button>
+                    <div style="background:#fff7ed; padding:15px; border-radius:8px; margin-top:15px; display:flex; justify-content:space-between;">
+                        <strong>إجمالي التكلفة (للقيد المحاسبي):</strong><strong id="dn-total" style="font-family:monospace; color:#ea580c; font-size:18px;">0.00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('dn-modal').style.display='none'">إلغاء</button>
+                    <button type="submit" class="btn btn-success">💾 حفظ وإصدار القيد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { renderDNs(); });
+        function renderDNs() {
+            const tbody = document.getElementById('dn-body');
+            const notes = getDeliveryNotes().slice().reverse();
+            document.getElementById('dn-count').textContent = notes.length;
+            document.getElementById('dn-pending').textContent = notes.filter(n => n.status !== 'invoiced').length;
+            if (notes.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد أذون تسليم بعد.</td></tr>'; return; }
+            tbody.innerHTML = notes.map(n => {
+                const totalCost = n.items.reduce((s, i) => s + (parseFloat(i.qty)||0) * (parseFloat(i.cost)||0), 0);
+                let badge = n.status === 'invoiced' ? `<span class="status-invoiced">✅ مفوتر (${n.invoiceNumber || ''})</span>` : '<span class="status-pending">⏳ غير مفوتر</span>';
+                return `<tr>
+                    <td style="font-family:monospace; font-weight:700; color:#ea580c;">${n.dnNumber}</td>
+                    <td>${n.date}</td>
+                    <td>${n.customerName}</td>
+                    <td style="font-family:monospace; font-weight:700;">${totalCost.toFixed(2)}</td>
+                    <td>${badge}</td>
+                    <td>
+                        ${n.status !== 'invoiced' ? `<button class="action-btn btn-convert" onclick="convertDNToInvoice(${n.id})">تحويل لفاتورة</button>` : ''}
+                        ${n.status !== 'invoiced' ? `<button class="action-btn btn-cancel" onclick="deleteDN(${n.id})">حذف</button>` : '<span style="color:#94a3b8; font-size:11px;">محفوظ</span>'}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        function openDNModal() {
+            document.getElementById('dn-modal').style.display = 'flex';
+            document.getElementById('dn-date').valueAsDate = new Date();
+            const custSel = document.getElementById('dn-customer');
+            custSel.innerHTML = '<option value="">-- اختر --</option>';
+            getCustomers().forEach(c => { custSel.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.code} - ${c.name}</option>`; });
+            const whSel = document.getElementById('dn-warehouse');
+            whSel.innerHTML = '';
+            getWarehouses().forEach(w => { whSel.innerHTML += `<option value="${w.id}" data-name="${w.name}">${w.name}</option>`; });
+            document.getElementById('dn-items').innerHTML = '';
+            addDNRow();
+        }
+        function addDNRow() {
+            const tr = document.createElement('tr');
+            const whId = parseInt(document.getElementById('dn-warehouse').value);
+            const items = getItems().filter(i => i.warehouseId === whId && i.qty > 0);
+            const opts = items.map(i => `<option value="${i.id}" data-cost="${i.purchasePrice}" data-qty="${i.qty}" data-name="${i.name}">${i.name} (متوفر: ${i.qty})</option>`).join('');
+            tr.innerHTML = `<td><select class="dn-item" style="width:100%;padding:6px;"><option value="">-- اختر --</option>${opts}</select></td>
+                <td><input type="number" class="dn-qty" value="1" min="1" style="width:100%;text-align:center;" oninput="calcDNTotal()"></td>
+                <td><input type="number" class="dn-cost" step="0.01" style="width:100%;text-align:center;" oninput="calcDNTotal()"></td>
+                <td><button type="button" class="action-btn btn-cancel" onclick="this.closest('tr').remove(); calcDNTotal();">×</button></td>`;
+            document.getElementById('dn-items').appendChild(tr);
+            tr.querySelector('.dn-item').addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                tr.querySelector('.dn-cost').value = opt.getAttribute('data-cost') || 0;
+                calcDNTotal();
+            });
+        }
+        function calcDNTotal() {
+            let total = 0;
+            document.querySelectorAll('#dn-items tr').forEach(tr => {
+                const q = parseFloat(tr.querySelector('.dn-qty').value) || 0;
+                const c = parseFloat(tr.querySelector('.dn-cost').value) || 0;
+                total += q * c;
+            });
+            document.getElementById('dn-total').textContent = total.toFixed(2);
+            return total;
+        }
+        function saveDN(e) {
+            e.preventDefault();
+            const custSel = document.getElementById('dn-customer');
+            if (!custSel.value) return alert('اختر العميل');
+            const custName = custSel.options[custSel.selectedIndex].getAttribute('data-name');
+            const whSel = document.getElementById('dn-warehouse');
+            const whName = whSel.options[whSel.selectedIndex].getAttribute('data-name');
+            const date = document.getElementById('dn-date').value;
+            if (typeof isDateInClosedPeriod === 'function') {
+                const cp = isDateInClosedPeriod(date);
+                if (cp) return alert('⚠️ الفترة مغلقة');
+            }
+            if (typeof isDateInClosedYear === 'function') {
+                const cy = isDateInClosedYear(date);
+                if (cy) return alert('⚠️ السنة المالية مغلقة');
+            }
+            let items = [];
+            let allItems = getItems();
+            let hasError = false;
+            document.querySelectorAll('#dn-items tr').forEach(tr => {
+                const sel = tr.querySelector('.dn-item');
+                if (!sel.value) return;
+                const qty = parseFloat(tr.querySelector('.dn-qty').value) || 0;
+                const cost = parseFloat(tr.querySelector('.dn-cost').value) || 0;
+                const availQty = parseFloat(sel.options[sel.selectedIndex].getAttribute('data-qty')) || 0;
+                if (qty > availQty) { alert(`الكمية أكبر من المتوفر (${availQty})`); hasError = true; return; }
+                items.push({ itemId: parseInt(sel.value), itemName: sel.options[sel.selectedIndex].getAttribute('data-name'), qty, cost });
+            });
+            if (hasError) return;
+            if (items.length === 0) return alert('أضف أصنافاً');
+            items.forEach(item => {
+                const idx = allItems.findIndex(i => i.id === item.itemId);
+                if (idx !== -1) allItems[idx].qty -= item.qty;
+            });
+            saveItems(allItems);
+            const notes = getDeliveryNotes();
+            const dnNum = `DN-${new Date().getFullYear()}-${String(notes.length + 1).padStart(4, '0')}`;
+            const newDN = {
+                id: Date.now(), dnNumber: dnNum, date, customerId: parseInt(custSel.value), customerName: custName,
+                warehouse: whName, items, status: 'pending', createdAt: new Date().toISOString()
+            };
+            notes.push(newDN);
+            saveDeliveryNotes(notes);
+            const res = createDeliveryNoteEntry(newDN);
+            if (res.success) {
+                alert(`✅ تم حفظ إذن التسليم ${dnNum}
+📝 تم تسجيل قيد التكلفة: ${res.entryNumber}
+💰 التكلفة: ${res.totalCost.toFixed(2)}`);
+            } else {
+                alert('⚠️ تم حفظ الإذن لكن القيد لم يُنشأ: ' + res.error);
+            }
+            document.getElementById('dn-modal').style.display = 'none';
+            renderDNs();
+        }
+        function convertDNToInvoice(id) {
+            if (!confirm('تحويل الإذن إلى فاتورة مبيعات؟
+ملاحظة: سيتم تسجيل الإيراد والضريبة فقط (بدون تكرار التكلفة).')) return;
+            window.location.href = '/pages/commercial/sales-invoices.html?dn_id=' + id;
+        }
+        function deleteDN(id) {
+            if (!confirm('حذف الإذن؟ (لن يُعكس قيد التكلفة تلقائياً)')) return;
+            saveDeliveryNotes(getDeliveryNotes().filter(n => n.id !== id));
+            renderDNs();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

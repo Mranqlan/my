@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><title>الحضور</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic&display=swap" rel="stylesheet">
+<style>
+*{font-family:Cairo,sans-serif}
+body{background:#f8fafc;margin:0;margin-right:260px;padding:20px;color:#1e293b}
+h1{background:#0f172a;color:#fff;padding:20px;border-radius:12px;margin:0 0 20px}
+.bar{background:#fff;padding:12px;border-radius:8px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select,input,button{padding:6px 12px;border:1px solid #ddd;border-radius:6px;font-family:Cairo,sans-serif}
+button{background:#10b981;color:#fff;border:0;cursor:pointer;font-weight:700}
+button.sec{background:#1e293b}
+table{width:100%;border-collapse:collapse;background:#fff}
+th{background:#0f172a;color:#fff;padding:10px;font-size:13px;text-align:right}
+td{padding:8px;border-bottom:1px solid #eee;font-size:13px}
+td input{width:60px;text-align:center}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+<h1>📅 الحضور والغياب</h1>
+<div class="bar">
+<select id="m"></select>
+<input id="y" type="number" value="2025">
+<button class="sec" onclick="load()">تحميل</button>
+<button onclick="save()">حفظ</button>
+</div>
+<table><thead><tr><th>الموظف</th><th>حضور</th><th>غياب</th><th>خصم</th></tr></thead><tbody id="tb"></tbody></table>
+<script>
+for(let i=1;i<=12;i++){const o=document.createElement('option');o.value=i;o.textContent=i;document.getElementById('m').appendChild(o);}
+document.getElementById('m').value=new Date().getMonth()+1;
+let emps=[],data={};
+function load(){
+const m=+document.getElementById('m').value,y=+document.getElementById('y').value;
+emps=JSON.parse(localStorage.getItem('employees')||'[]').filter(e=>e.status!=='terminated');
+data={};getAttendanceRecords(m,y).forEach(r=>data[r.employeeId]=r);
+document.getElementById('tb').innerHTML=emps.map(e=>{
+const r=data[e.id]||{present:30,absent:0};
+const d=calculateAttendanceDeduction(e,r);
+return `<tr data-id="${e.id}"><td>${e.name||'-'}</td><td><input type="number" data-f="present" value="${r.present||0}"></td><td><input type="number" data-f="absent" value="${r.absent||0}"></td><td style="color:#10b981;font-weight:700">${d.toLocaleString()}</td></tr>`;
+}).join('');
+}
+function save(){
+const m=+document.getElementById('m').value,y=+document.getElementById('y').value;
+document.querySelectorAll('#tb tr[data-id]').forEach(tr=>{
+const rec={employeeId:tr.dataset.id,month:m,year:y,workDays:30,present:0,absent:0,late:0,annual:0,sick:0,unpaid:0};
+tr.querySelectorAll('input[data-f]').forEach(i=>rec[i.dataset.f]=+i.value||0);
+saveAttendanceRecord(rec);
+});
+alert('✅ تم الحفظ');
+}
+document.addEventListener('DOMContentLoaded',load);
+</script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+    <script src="/assets/js/hr-extended.js?v=777777"></script>
+</body>
+</html>

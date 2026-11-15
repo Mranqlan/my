@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مسير الرواتب</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        @media print { .sidebar, .top-header, .page-header .btn, .filter-bar { display: none !important; } .main-wrapper { margin: 0; padding: 0; } .content-area { padding: 0; } .table-container { box-shadow: none; border: none; } }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>مسير الرواتب الشهري</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة المسير</button>
+                    <button class="btn btn-primary" onclick="generatePayroll()">توليد مسير الرواتب وتوليد القيد</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>اسم الموظف</th>
+                            <th>الفرع</th>
+                            <th>الراتب الأساسي</th>
+                            <th>البدلات</th>
+                            <th>الإجمالي</th>
+                            <th>الاستقطاع (تأمينات)</th><th>السلف والخصومات</th>
+                            <th>صافي الراتب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payroll-body"></tbody>
+                    <tfoot>
+                        <tr style="background: #f1f5f9; font-weight: bold; border-top: 2px solid var(--primary-color);">
+                            <td colspan="3" style="text-align: left;">الإجماليات:</td>
+                            <td id="tot-base" style="font-family: monospace;">0.00</td>
+                            <td id="tot-allow" style="font-family: monospace;">0.00</td>
+                            <td id="tot-gross" style="font-family: monospace;">0.00</td>
+                            <td id="tot-ded" style="font-family: monospace; color: #ef4444;">0.00</td>
+                            <td id="tot-other" style="font-family: monospace; color: #ef4444;">0.00</td>
+                            <td id="tot-net" style="font-family: monospace; color: #10b981;">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        let payrollData = [];
+        document.addEventListener('DOMContentLoaded', () => {
+            const emps = getEmployees();
+            const tbody = document.getElementById('payroll-body');
+            let totBase = 0, totAllow = 0, totGross = 0, totDed = 0, totOther = 0, totNet = 0;
+            if (emps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا يوجد موظفين مسجلين.</td></tr>';
+                return;
+            }
+            const advances = getAdvances().filter(a => a.status === 'pending');
+            const penalties = getPenalties().filter(p => p.status === 'pending');
+            emps.forEach(emp => {
+                const gross = emp.base + emp.allow;
+                const dedAmount = gross * (emp.ded / 100);
+                // حساب السلف والخصومات المعلقة لهذا الموظف
+                const empAdvs = advances.filter(a => a.empId === emp.id);
+                const empPens = penalties.filter(p => p.empId === emp.id);
+                const advAmount = empAdvs.reduce((sum, a) => sum + a.amount, 0);
+                const penAmount = empPens.reduce((sum, p) => sum + p.amount, 0);
+                const otherDeductions = advAmount + penAmount;
+                const net = gross - dedAmount - otherDeductions;
+                totBase += emp.base;
+                totAllow += emp.allow;
+                totGross += gross;
+                totDed += dedAmount;
+                totOther += otherDeductions;
+                totNet += net;
+                payrollData.push({ 
+                    empId: emp.id, name: emp.name, branchName: emp.branchName, 
+                    base: emp.base, allow: emp.allow, gross, dedAmount, 
+                    otherDeductions, net,
+                    advances: empAdvs, penalties: empPens
+                });
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace;">${emp.code}</td>
+                        <td style="text-align: right; font-weight: bold;">${emp.name}</td>
+                        <td>${emp.branchName}</td>
+                        <td style="font-family: monospace;">${emp.base.toFixed(2)}</td>
+                        <td style="font-family: monospace;">${emp.allow.toFixed(2)}</td>
+                        <td style="font-family: monospace; font-weight: bold;">${gross.toFixed(2)}</td>
+                        <td style="font-family: monospace; color: #ef4444;">${dedAmount.toFixed(2)}</td>
+                        <td style="font-family: monospace; color: #ef4444;">${otherDeductions.toFixed(2)}</td>
+                        <td style="font-family: monospace; font-weight: bold; color: #10b981;">${net.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('tot-base').textContent = totBase.toFixed(2);
+            document.getElementById('tot-allow').textContent = totAllow.toFixed(2);
+            document.getElementById('tot-gross').textContent = totGross.toFixed(2);
+            document.getElementById('tot-ded').textContent = totDed.toFixed(2);
+            document.getElementById('tot-other').textContent = totOther.toFixed(2);
+            document.getElementById('tot-net').textContent = totNet.toFixed(2);
+        });
+        function generatePayroll() {
+            if (payrollData.length === 0) return alert('لا يوجد موظفين لتوليد رواتبهم.');
+            if (!confirm('هل أنت متأكد من ترحيل مسير الرواتب؟ سيتم إنشاء قيد محاسبي بذلك.')) return;
+            let totGross = 0, totDed = 0, totNet = 0;
+            payrollData.forEach(p => { totGross += p.gross; totDed += p.dedAmount; totNet += p.net; });
+            const date = new Date().toISOString().split('T')[0];
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            // القيد: مدين مصروف الرواتب (5101) / دائن ضرائب (2103) / دائن مستحقات (2104)
+            entries.push({
+                id: Date.now(),
+                entryNumber: entryNumber,
+                date: date,
+                description: `مسير رواتب شهر ${new Date().getMonth() + 1} - ${new Date().getFullYear()}`,
+                lines: [
+                    { accountCode: "5101", accountName: "مصروف الرواتب والأجور", debit: totGross, credit: 0 },
+                    { accountCode: "2103", accountName: "ضرائب وتأمينات مستحقة", debit: 0, credit: totDed },
+                    { accountCode: "2104", accountName: "رواتب مستحقة الدفع", debit: 0, credit: totNet }
+                ],
+                totalDebit: totGross,
+                totalCredit: totGross
+            });
+            saveEntries(entries);
+            // حفظ المسير في السجل (اختياري)
+            const payrolls = getPayrolls();
+            payrolls.push({ id: Date.now(), date, entryNumber, details: payrollData });
+            savePayrolls(payrolls);
+            // تحديث حالة السلف والخصومات إلى "مدفوعة/مخصومة"
+            let allAdvs = getAdvances();
+            let allPens = getPenalties();
+            payrollData.forEach(p => {
+                p.advances.forEach(a => {
+                    let idx = allAdvs.findIndex(x => x.id === a.id);
+                    if(idx !== -1) allAdvs[idx].status = 'paid';
+                });
+                p.penalties.forEach(pen => {
+                    let idx = allPens.findIndex(x => x.id === pen.id);
+                    if(idx !== -1) allPens[idx].status = 'paid';
+                });
+            });
+            saveAdvances(allAdvs);
+            savePenalties(allPens);
+            alert(`تم ترحيل مسير الرواتب بنجاح!\nتم إنشاء القيد المحاسبي رقم ${entryNumber}`);
+            window.location.href = '/pages/financial/review-entries.html';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+    <script src="/assets/js/hr-extended.js?v=777777"></script>
+</body>
+</html>

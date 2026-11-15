@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>تكلفة الاستيراد (Landed Cost) | AL SHAMEL</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .lc-hero { background: linear-gradient(135deg, #0f172a, #1d4ed8, #3b82f6); color: white; padding: 25px; border-radius: 16px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .lc-hero h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .lc-table { background: white; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .lc-table table { width: 100%; border-collapse: collapse; }
+        .lc-table th { background: #f8fafc; padding: 15px; font-size: 12px; font-weight: 800; color: #475569; text-align: right; }
+        .lc-table td { padding: 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-align: right; }
+        .add-btn { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; }
+        .info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 13px; color: #1e40af; line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="lc-hero">
+                <div>
+                    <h2>🚢 تكلفة الاستيراد (Landed Cost)</h2>
+                    <p style="margin:5px 0 0 0; opacity:0.9;">توزيع تكاليف الشحن والجمارك على فاتورة المشتريات لزيادة تكلفة المخزون</p>
+                </div>
+            </div>
+            <div class="info-banner">
+                <strong>📌 متوافق مع معيار (IAS 2) و (SOCPA):</strong> يجب تحميل تكاليف الشحن والجمارك والتأمين على تكلفة المخزون، وليس اعتبارها مصروفات تشغيلية. هذا يضمن دقة تقييم المخزون وتكلفة البضاعة المباعة.
+            </div>
+            <div style="margin-bottom:20px; text-align:left;">
+                <button class="add-btn" onclick="openLCModal()">+ إضافة تكلفة استيراد جديدة</button>
+            </div>
+            <div class="lc-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم العملية</th>
+                            <th>التاريخ</th>
+                            <th>فاتورة المشتريات</th>
+                            <th>المورد</th>
+                            <th>إجمالي التكاليف الإضافية</th>
+                            <th>طريقة التوزيع</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lc-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة تكلفة استيراد -->
+    <div class="modal-overlay" id="lc-modal">
+        <div class="modal-content" style="width: 800px;">
+            <div class="modal-header"><h3>توزيع تكلفة الاستيراد</h3><button class="close-btn" onclick="document.getElementById('lc-modal').style.display='none'">×</button></div>
+            <form onsubmit="saveLC(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom:15px;">
+                        <label>اختر فاتورة المشتريات</label>
+                        <select id="lc-invoice" onchange="loadInvoiceItems()" required>
+                            <option value="">-- اختر الفاتورة --</option>
+                        </select>
+                    </div>
+                    <div id="items-container" style="display:none; margin-bottom:15px;">
+                        <h4 style="margin-bottom:10px; color:#1e293b;">أصناف الفاتورة:</h4>
+                        <table class="data-table">
+                            <thead><tr><th>الصنف</th><th>الكمية</th><th>القيمة الأساسية</th><th>نصيب التكلفة الإضافية</th><th>التكلفة الجديدة للوحدة</th></tr></thead>
+                            <tbody id="items-body"></tbody>
+                        </table>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <div class="form-group"><label>تكلفة الشحن</label><input type="number" id="lc-shipping" value="0.00" step="0.01" oninput="calcAllocation()"></div>
+                        <div class="form-group"><label>تكلفة الجمارك والتخليص</label><input type="number" id="lc-customs" value="0.00" step="0.01" oninput="calcAllocation()"></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <div class="form-group"><label>تكاليف أخرى (تأمين، نقل داخلي)</label><input type="number" id="lc-other" value="0.00" step="0.01" oninput="calcAllocation()"></div>
+                        <div class="form-group">
+                            <label>طريقة التوزيع</label>
+                            <select id="lc-method" onchange="calcAllocation()">
+                                <option value="value">حسب القيمة (Value)</option>
+                                <option value="qty">حسب الكمية (Quantity)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="background:#eff6ff; padding:15px; border-radius:8px; display:flex; justify-content:space-between;">
+                        <strong>إجمالي التكاليف الإضافية:</strong>
+                        <strong id="lc-total" style="font-family:monospace; color:#1d4ed8; font-size:18px;">0.00</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('lc-modal').style.display='none'">إلغاء</button>
+                    <button type="submit" class="btn btn-success">💾 حفظ وترحيل القيد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        let currentInvoiceItems = [];
+        document.addEventListener('DOMContentLoaded', () => { renderLCs(); });
+        function renderLCs() {
+            const tbody = document.getElementById('lc-body');
+            const lcs = getLandedCosts().reverse();
+            if (lcs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">لا توجد عمليات توزيع تكاليف بعد.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = lcs.map(lc => `
+                <tr>
+                    <td style="font-family:monospace; font-weight:700; color:#1d4ed8;">${lc.lcNumber}</td>
+                    <td>${lc.date}</td>
+                    <td>${lc.invoiceNumber}</td>
+                    <td>${lc.supplierName}</td>
+                    <td style="font-family:monospace; font-weight:700; color:#ef4444;">${lc.totalCost.toFixed(2)}</td>
+                    <td>${lc.method === 'value' ? 'حسب القيمة' : 'حسب الكمية'}</td>
+                </tr>
+            `).join('');
+        }
+        function openLCModal() {
+            document.getElementById('lc-modal').style.display = 'flex';
+            const sel = document.getElementById('lc-invoice');
+            sel.innerHTML = '<option value="">-- اختر الفاتورة --</option>';
+            getPurchases().forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.invoiceNumber} - ${p.supplierName} (${p.total.toFixed(2)})</option>`;
+            });
+            document.getElementById('items-container').style.display = 'none';
+            document.getElementById('lc-shipping').value = '0.00';
+            document.getElementById('lc-customs').value = '0.00';
+            document.getElementById('lc-other').value = '0.00';
+            document.getElementById('lc-total').textContent = '0.00';
+        }
+        function loadInvoiceItems() {
+            const invId = parseInt(document.getElementById('lc-invoice').value);
+            if (!invId) { document.getElementById('items-container').style.display = 'none'; return; }
+            const invoice = getPurchases().find(p => p.id === invId);
+            if (!invoice || !invoice.items) {
+                alert('هذه الفاتورة لا تحتوي على تفاصيل أصناف.');
+                document.getElementById('items-container').style.display = 'none';
+                return;
+            }
+            currentInvoiceItems = invoice.items;
+            document.getElementById('items-container').style.display = 'block';
+            calcAllocation();
+        }
+        function calcAllocation() {
+            const totalExtra = 
+                (parseFloat(document.getElementById('lc-shipping').value) || 0) +
+                (parseFloat(document.getElementById('lc-customs').value) || 0) +
+                (parseFloat(document.getElementById('lc-other').value) || 0);
+            document.getElementById('lc-total').textContent = totalExtra.toFixed(2);
+            if (currentInvoiceItems.length === 0) return;
+            const method = document.getElementById('lc-method').value;
+            let totalBase = 0;
+            if (method === 'value') {
+                totalBase = currentInvoiceItems.reduce((s, i) => s + (i.qty * i.price), 0);
+            } else {
+                totalBase = currentInvoiceItems.reduce((s, i) => s + i.qty, 0);
+            }
+            const tbody = document.getElementById('items-body');
+            tbody.innerHTML = '';
+            currentInvoiceItems.forEach(item => {
+                let weight = method === 'value' ? (item.qty * item.price) : item.qty;
+                let share = totalBase > 0 ? (weight / totalBase) * totalExtra : 0;
+                let baseTotal = item.qty * item.price;
+                let newTotal = baseTotal + share;
+                let newUnitCost = newTotal / item.qty;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.itemName}</td>
+                        <td>${item.qty}</td>
+                        <td style="font-family:monospace;">${baseTotal.toFixed(2)}</td>
+                        <td style="font-family:monospace; color:#3b82f6; font-weight:bold;">${share.toFixed(2)}</td>
+                        <td style="font-family:monospace; color:#10b981; font-weight:bold;">${newUnitCost.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+        function saveLC(e) {
+            e.preventDefault();
+            const invId = parseInt(document.getElementById('lc-invoice').value);
+            if (!invId) return alert('اختر الفاتورة أولاً');
+            const invoice = getPurchases().find(p => p.id === invId);
+            const shipping = parseFloat(document.getElementById('lc-shipping').value) || 0;
+            const customs = parseFloat(document.getElementById('lc-customs').value) || 0;
+            const other = parseFloat(document.getElementById('lc-other').value) || 0;
+            const totalCost = shipping + customs + other;
+            if (totalCost <= 0) return alert('أدخل تكاليف إضافية أكبر من صفر');
+            if (!confirm(`هل أنت متأكد من توزيع مبلغ ${totalCost.toFixed(2)} على فاتورة ${invoice.invoiceNumber}؟ سيتم تحديث تكلفة الأصناف وتوليد قيد محاسبي.`)) return;
+            const method = document.getElementById('lc-method').value;
+            let totalBase = method === 'value' 
+                ? currentInvoiceItems.reduce((s, i) => s + (i.qty * i.price), 0)
+                : currentInvoiceItems.reduce((s, i) => s + i.qty, 0);
+            let allItems = getItems();
+            // 1. تحديث تكلفة الأصناف في المخزون (WAC)
+            currentInvoiceItems.forEach(item => {
+                let weight = method === 'value' ? (item.qty * item.price) : item.qty;
+                let share = totalBase > 0 ? (weight / totalBase) * totalCost : 0;
+                let addedUnitCost = share / item.qty;
+                // البحث عن الصنف في المخزون (قد يكون في نفس المستودع أو آخر)
+                let idx = allItems.findIndex(i => i.id === item.itemId);
+                if (idx !== -1) {
+                    allItems[idx].purchasePrice = (parseFloat(allItems[idx].purchasePrice) || 0) + addedUnitCost;
+                }
+            });
+            saveItems(allItems);
+            // 2. توليد القيد المحاسبي: (مدين: المخزون 1104 / دائن: البنك 1102)
+            const entries = getEntries();
+            const entryNum = `LC-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(), entryNumber: entryNum, date: new Date().toISOString().split('T')[0],
+                description: `توزيع تكاليف استيراد على فاتورة ${invoice.invoiceNumber}`,
+                lines: [
+                    { accountCode: "1104", accountName: "المخزون (البضاعة)", debit: totalCost, credit: 0 },
+                    { accountCode: "1102", accountName: "البنك الأهلي", debit: 0, credit: totalCost }
+                ],
+                totalDebit: totalCost, totalCredit: totalCost, status: 'posted'
+            });
+            saveEntries(entries);
+            // 3. حفظ سجل العملية
+            const lcs = getLandedCosts();
+            const lcNum = `LC-${new Date().getFullYear()}-${String(lcs.length + 1).padStart(4, '0')}`;
+            lcs.push({
+                id: Date.now(), lcNumber: lcNum, date: new Date().toISOString().split('T')[0],
+                invoiceId: invId, invoiceNumber: invoice.invoiceNumber, supplierName: invoice.supplierName,
+                shipping, customs, other, totalCost, method, entryNumber: entryNum
+            });
+            saveLandedCosts(lcs);
+            document.getElementById('lc-modal').style.display = 'none';
+            renderLCs();
+            alert(`✅ تم توزيع التكاليف بنجاح!
+تم تحديث تكلفة الأصناف وتوليد القيد المحاسبي ${entryNum}`);
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

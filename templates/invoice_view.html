@@ -1,0 +1,58 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>فاتورة ضريبية / مبيعات</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="invoice-box">
+    <div class="invoice-header">
+      <div class="company-info">
+        <h1>AL SHAMEL ERP</h1>
+        <p>نظام إدارة الموارد المؤسسية</p>
+      </div>
+      <div class="invoice-details">
+        <h3>فاتورة مبيعات</h3>
+        <p><strong>رقم الفاتورة:</strong> {{ invoice.invoice_number }}</p>
+        <p><strong>التاريخ:</strong> {{ invoice.date }}</p>
+      </div>
+    </div>
+    <p><strong>اسم العميل:</strong> {{ invoice.party_name }}</p>
+    <p><strong>حالة الفاتورة:</strong> <span style="padding: 4px 10px; background: #e8f7f1; color: #13876e; border-radius: 20px;">{{ invoice.status }}</span></p>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>البيان / الوصف</th>
+          <th>المبلغ الإجمالي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>مستحقات مبيعات عامة / منتجات</td>
+          <td>{{ invoice.total_amount }} ر.س</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="total-section">
+      الإجمالي النهائي: {{ invoice.total_amount }} ر.س
+    </div>
+    <button class="print-btn" onclick="window.print()">طباعة الفاتورة / حفظ كملف PDF</button>
+  </div>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

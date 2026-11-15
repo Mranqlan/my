@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة المستخدمين والصلاحيات</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        .matrix-table th, .matrix-table td { text-align: center; vertical-align: middle; font-size: 13px; padding: 10px 5px; }
+        .matrix-table th:first-child, .matrix-table td:first-child { text-align: right; font-weight: bold; min-width: 180px; }
+        .matrix-table th { background-color: #f8fafc; color: var(--primary-color); font-weight: 800; }
+        .matrix-table tbody tr:hover { background-color: #f1f5f9; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إدارة المستخدمين والصلاحيات (Users & Roles)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openUserModal()">+ إضافة مستخدم جديد</button>
+                </div>
+            </div>
+            <!-- جدول المستخدمين مع رابط الدخول -->
+            <div class="table-container" style="margin-bottom: 40px;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">اسم المستخدم</th>
+                            <th width="20%">الاسم الكامل</th>
+                            <th width="15%">المسمى الوظيفي</th>
+                            <th width="15%">كلمة المرور</th>
+                            <th width="20%">رابط الدخول (Access Link)</th>
+                            <th width="15%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body"></tbody>
+                </table>
+            </div>
+            <!-- مصفوفة الصلاحيات للروابط -->
+            <div class="page-header" style="margin-top: 20px;">
+                <h2>مصفوفة الصلاحيات للروابط (Permissions Matrix)</h2>
+            </div>
+            <div class="table-container" style="overflow-x: auto;">
+                <table class="data-table matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: right;">الرابط / التبويب</th>
+                            <th>المدير العام</th><th>المدير المالي</th><th>المحاسب</th>
+                            <th>مدير المبيعات</th><th>مندوب مبيعات</th><th>مدير المشتريات</th>
+                            <th>أمين المخزن</th><th>مدير الموارد البشرية</th><th>العامل / الفني</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1. لوحة التحكم (Dashboard)</td><td>✅</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>2. الإعدادات العامة</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>3. دليل شجرة الحسابات</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>3. مراكز التكلفة (الفروع)</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>4. القيود اليومية</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>4. سندات القبض والصرف</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>5. فواتير المبيعات</td><td>✅</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>5. مرتجعات المبيعات</td><td>✅</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>6. فواتير المشتريات</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>6. مرتجعات المشتريات</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>7. ملفات الأصناف (المخزون)</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td><td>👁️</td></tr>
+                        <tr><td>7. إدارة المستودعات</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>7. تسويات المخزون</td><td>✅</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>8. الأصول الثابتة والإهلاك</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>9. ملفات الموظفين</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td></tr>
+                        <tr><td>9. مسير الرواتب</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>✅</td><td>❌</td></tr>
+                        <tr><td>10. إدارة الشيكات</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>10. تسوية الحسابات البنكية</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>11. الإقرار الضريبي</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                        <tr><td>12. التقارير المالية</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 15px; font-size: 13px; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 6px;">
+                    <strong>دليل الرموز:</strong> ✅ = صلاحية كاملة | 👁️ = عرض فقط | ❌ = محظور.
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة مستخدم جديد</h3>
+                <button class="close-btn" onclick="closeUserModal()">×</button>
+            </div>
+            <form id="user-form" onsubmit="saveUser(event)">
+                <div class="modal-body">
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>اسم المستخدم (English)</label>
+                            <input type="text" id="user-username" required placeholder="e.g. accountant1">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>الاسم الكامل</label>
+                            <input type="text" id="user-fullname" required placeholder="مثال: أحمد محمد">
+                        </div>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>المسمى الوظيفي (Role)</label>
+                            <select id="user-role" required>
+                                <option value="admin">مدير النظام (System Admin)</option>
+                                <option value="gm">المدير العام (General Manager)</option>
+                                <option value="finance_mgr">المدير المالي (Finance Manager)</option>
+                                <option value="accountant">محاسب (Accountant)</option>
+                                <option value="sales_mgr">مدير مبيعات (Sales Manager)</option>
+                                <option value="sales_rep">مندوب مبيعات (Sales Rep)</option>
+                                <option value="purchasing_mgr">مدير مشتريات (Purchasing Manager)</option>
+                                <option value="storekeeper">أمين مخزن (Storekeeper)</option>
+                                <option value="hr_mgr">مدير موارد بشرية (HR Manager)</option>
+                                <option value="worker">عامل / فني (Worker)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>كلمة المرور</label>
+                            <input type="password" id="user-password" required placeholder="******">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ المستخدم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', renderUsers);
+        function getRoleName(role) {
+            const names = {
+                'admin': 'مدير النظام', 'gm': 'المدير العام', 'finance_mgr': 'المدير المالي',
+                'accountant': 'محاسب', 'sales_mgr': 'مدير مبيعات', 'sales_rep': 'مندوب مبيعات',
+                'purchasing_mgr': 'مدير مشتريات', 'storekeeper': 'أمين مخزن', 'hr_mgr': 'مدير موارد بشرية',
+                'worker': 'عامل / فني'
+            };
+            return names[role] || role;
+        }
+        function getRoleColor(role) {
+            if(role === 'admin' || role === 'gm') return 'background: #fee2e2; color: #991b1b;';
+            if(role.includes('mgr')) return 'background: #dbeafe; color: #1e40af;';
+            if(role === 'accountant') return 'background: #fef3c7; color: #92400e;';
+            return 'background: #f1f5f9; color: #475569;';
+        }
+        function renderUsers() {
+            const tbody = document.getElementById('users-body');
+            tbody.innerHTML = '';
+            const users = getUsers();
+            users.forEach(u => {
+                let roleName = getRoleName(u.role);
+                let roleStyle = getRoleColor(u.role);
+                // توليد رابط الدخول بناء على اسم المستخدم
+                let loginLink = `${window.location.origin}/?user=${u.username}`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; font-weight: bold;">${u.username}</td>
+                        <td style="text-align: right;">${u.fullName}</td>
+                        <td><span style="${roleStyle} padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px;">${roleName}</span></td>
+                        <td style="font-family: monospace;">********</td>
+                        <td>
+                            <button class="btn" style="background-color: #3b82f6; color: white; padding: 6px 12px; font-size: 12px; border-radius: 6px;" onclick="copyLink('${loginLink}', '${u.fullName}')">
+                                📋 نسخ الرابط
+                            </button>
+                        </td>
+                        <td>
+                            ${u.username !== 'admin' ? `<button class="btn-delete" onclick="deleteUser(${u.id})">حذف</button>` : '<span style="color:#64748b; font-size:12px;">محمي</span>'}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        function copyLink(link, name) {
+            // نسخ الرابط إلى الحافظة
+            navigator.clipboard.writeText(link).then(() => {
+                alert(`تم نسخ رابط الدخول الخاص بـ (${name}) بنجاح!\n\nالرابط: ${link}\n\nيمكنك إرساله له عبر الواتساب أو الإيميل.`);
+            }).catch(err => {
+                // في حال فشل النسخ (بسبب المتصفح)
+                prompt('تعذر النسخ التلقائي. يرجى نسخ الرابط يدويا:', link);
+            });
+        }
+        function openUserModal() {
+            document.getElementById('user-modal').style.display = 'flex';
+            document.getElementById('user-form').reset();
+        }
+        function closeUserModal() {
+            document.getElementById('user-modal').style.display = 'none';
+        }
+        function saveUser(event) {
+            event.preventDefault();
+            const username = document.getElementById('user-username').value.trim().toLowerCase();
+            const fullName = document.getElementById('user-fullname').value.trim();
+            const role = document.getElementById('user-role').value;
+            const password = document.getElementById('user-password').value;
+            let users = getUsers();
+            if (users.some(u => u.username === username)) {
+                return alert('اسم المستخدم موجود بالفعل!');
+            }
+            users.push({ id: Date.now(), username, fullName, role, password });
+            saveUsers(users);
+            closeUserModal();
+            renderUsers();
+            alert('تم إضافة المستخدم بنجاح!');
+        }
+        function deleteUser(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا المستخدم')) return;
+            let users = getUsers().filter(u => u.id !== id);
+            saveUsers(users);
+            renderUsers();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

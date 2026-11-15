@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>الفروع والأقسام (مراكز التكلفة)</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+            <div class="search-box"><input type="text" placeholder="بحث..."></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>الفروع والأقسام (مراكز التكلفة)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openCCModal()">+ إضافة فرع أو قسم</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">الكود</th>
+                            <th width="35%">الاسم</th>
+                            <th width="20%">النوع</th>
+                            <th width="20%">تابع لـ</th>
+                            <th width="10%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cc-body">
+                        <!-- سيتم تعبئتها بالجافاسكريبت -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة مركز تكلفة -->
+    <div class="modal-overlay" id="cc-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة فرع / قسم جديد</h3>
+                <button class="close-btn" onclick="closeCCModal()">×</button>
+            </div>
+            <form id="cc-form" onsubmit="saveCC(event)">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>نوع مركز التكلفة</label>
+                        <select id="cc-type" onchange="toggleParentField()" required>
+                            <option value="فرع">فرع رئيسي</option>
+                            <option value="قسم">قسم فرعي</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>الاسم</label>
+                        <input type="text" id="cc-name" required placeholder="مثال: فرع الرياض أو قسم المبيعات">
+                    </div>
+                    <div class="form-group" id="parent-group" style="display: none; margin-bottom: 15px;">
+                        <label>التابع لفرع (الأب)</label>
+                        <select id="cc-parent"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCCModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', renderCCs);
+        function renderCCs() {
+            const tbody = document.getElementById('cc-body');
+            const ccs = getCostCenters();
+            tbody.innerHTML = '';
+            if (ccs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">لا توجد فروع أو أقسام مسجلة.</td></tr>';
+                return;
+            }
+            // عرض الفروع أولاً ثم الأقسام التابعة لها
+            const branches = ccs.filter(c => c.type === 'فرع');
+            const departments = ccs.filter(c => c.type === 'قسم');
+            branches.forEach(branch => {
+                tbody.innerHTML += `
+                    <tr style="background-color: #f8fafc; font-weight: bold;">
+                        <td style="font-family: monospace; color: var(--primary-color);">${branch.code}</td>
+                        <td style="text-align: right; color: var(--primary-color);">🏢 ${branch.name}</td>
+                        <td><span style="background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 20px; font-size: 12px;">فرع</span></td>
+                        <td>-</td>
+                        <td><button class="btn-delete" onclick="deleteCC(${branch.id})">حذف</button></td>
+                    </tr>
+                `;
+                // عرض الأقسام التابعة لهذا الفرع
+                const subDepts = departments.filter(d => d.parentId === branch.id);
+                subDepts.forEach(dept => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-family: monospace; color: #64748b;">${dept.code}</td>
+                            <td style="text-align: right; padding-right: 30px;">↳ ${dept.name}</td>
+                            <td><span style="background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 20px; font-size: 12px;">قسم</span></td>
+                            <td>${branch.name}</td>
+                            <td><button class="btn-delete" onclick="deleteCC(${dept.id})">حذف</button></td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+        function toggleParentField() {
+            const type = document.getElementById('cc-type').value;
+            const parentGroup = document.getElementById('parent-group');
+            if (type === 'قسم') {
+                parentGroup.style.display = 'block';
+                const parentSelect = document.getElementById('cc-parent');
+                const branches = getCostCenters().filter(c => c.type === 'فرع');
+                parentSelect.innerHTML = branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                if(branches.length === 0) parentSelect.innerHTML = '<option value="">لا توجد فروع (أضف فرعاً أولاً)</option>';
+            } else {
+                parentGroup.style.display = 'none';
+            }
+        }
+        function openCCModal() {
+            document.getElementById('cc-modal').style.display = 'flex';
+            document.getElementById('cc-form').reset();
+            toggleParentField();
+        }
+        function closeCCModal() {
+            document.getElementById('cc-modal').style.display = 'none';
+        }
+        function saveCC(event) {
+            event.preventDefault();
+            const type = document.getElementById('cc-type').value;
+            const name = document.getElementById('cc-name').value.trim();
+            const parentId = type === 'قسم' ? parseInt(document.getElementById('cc-parent').value) : null;
+            if (type === 'قسم' && !parentId) return alert('يجب إضافة فرع أولاً لتتمكن من إضافة قسم.');
+            let ccs = getCostCenters();
+            const nextId = ccs.length + 1;
+            // توليد كود حسب النوع
+            const code = type === 'فرع' ? `BR-${String(nextId).padStart(3, '0')}` : `DP-${String(nextId).padStart(3, '0')}`;
+            ccs.push({ id: Date.now(), code, name, type, parentId });
+            saveCostCenters(ccs);
+            closeCCModal();
+            renderCCs();
+            alert('تم الحفظ بنجاح!');
+        }
+        function deleteCC(id) {
+            if (!confirm('هل أنت متأكد من الحذف؟ (ملاحظة: لن يمسح البيانات المرتبطة به حالياً)')) return;
+            let ccs = getCostCenters().filter(c => c.id !== id);
+            saveCostCenters(ccs);
+            renderCCs();
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

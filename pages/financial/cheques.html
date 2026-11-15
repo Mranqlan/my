@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إدارة الشيكات</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>إدارة الشيكات (Cheques)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openChequeModal()">+ تسجيل شيك جديد</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="10%">رقم الشيك</th>
+                            <th width="15%">النوع</th>
+                            <th width="15%">الاسم (عميل/مورد)</th>
+                            <th width="15%">تاريخ الاستحقاق</th>
+                            <th width="15%">المبلغ</th>
+                            <th width="15%">الحالة</th>
+                            <th width="15%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cheques-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <!-- نافذة إضافة شيك -->
+    <div class="modal-overlay" id="cheque-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تسجيل شيك جديد</h3>
+                <button class="close-btn" onclick="closeChequeModal()">×</button>
+            </div>
+            <form id="cheque-form" onsubmit="saveCheque(event)">
+                <div class="modal-body">
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>نوع الشيك</label>
+                            <select id="ch-type" required onchange="toggleAccountLabel()">
+                                <option value="incoming">شيك وارد (من عميل)</option>
+                                <option value="outgoing">شيك صادر (لمورد)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>رقم الشيك</label>
+                            <input type="text" id="ch-number" required placeholder="123456">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label id="ch-account-label">العميل / المورد</label>
+                        <select id="ch-account" required></select>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>تاريخ الاستحقاق</label>
+                            <input type="date" id="ch-due-date" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>المبلغ</label>
+                            <input type="text" inputmode="decimal" id="ch-amount" value="0.00" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeChequeModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-success">حفظ الشيك</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('ch-due-date').valueAsDate = new Date();
+            renderCheques();
+            toggleAccountLabel();
+        });
+        function toggleAccountLabel() {
+            const type = document.getElementById('ch-type').value;
+            const label = document.getElementById('ch-account-label');
+            const select = document.getElementById('ch-account');
+            if (type === 'incoming') {
+                label.textContent = 'العميل (مستلم منه الشيك)';
+                select.innerHTML = getCustomers().map(c => `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`).join('');
+            } else {
+                label.textContent = 'المورد (مصدر له الشيك)';
+                select.innerHTML = getSuppliers().map(s => `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`).join('');
+            }
+        }
+        function renderCheques() {
+            const tbody = document.getElementById('cheques-body');
+            const cheques = getCheques();
+            tbody.innerHTML = '';
+            if (cheques.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b; padding: 20px;">لا توجد شيكات مسجلة.</td></tr>';
+                return;
+            }
+            // ترتيب الشيكات من الأحدث
+            cheques.reverse().forEach(ch => {
+                let statusBadge = '';
+                if (ch.status === 'pending') {
+                    statusBadge = ch.type === 'incoming' ? '<span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">تحت التحصيل</span>' : '<span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">معلق (لم يصرف)</span>';
+                } else if (ch.status === 'cleared') {
+                    statusBadge = '<span style="background: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">تم التحصيل/الصرف</span>';
+                } else if (ch.status === 'bounced') {
+                    statusBadge = '<span style="background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">مرتجع</span>';
+                }
+                let actionBtn = '';
+                if (ch.status === 'pending') {
+                    actionBtn = `<button class="btn btn-success" style="padding: 6px 12px; font-size: 12px;" onclick="changeChequeStatus(${ch.id}, 'cleared')">تأكيد التحصيل</button>
+                                 <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px; margin-right: 5px;" onclick="changeChequeStatus(${ch.id}, 'bounced')">مرتجع</button>`;
+                } else {
+                    actionBtn = '-';
+                }
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; font-weight: bold;">${ch.number}</td>
+                        <td>${ch.type === 'incoming' ? 'وارد (من عميل)' : 'صادر (لمورد)'}</td>
+                        <td style="font-weight: bold;">${ch.accountName}</td>
+                        <td>${ch.dueDate}</td>
+                        <td style="font-family: monospace; font-weight: bold; color: var(--primary-color);">${parseFloat(ch.amount).toFixed(2)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+        function openChequeModal() {
+            document.getElementById('cheque-modal').style.display = 'flex';
+            document.getElementById('cheque-form').reset();
+            document.getElementById('ch-due-date').valueAsDate = new Date();
+            toggleAccountLabel();
+        }
+        function closeChequeModal() { document.getElementById('cheque-modal').style.display = 'none'; }
+        function saveCheque(event) {
+            event.preventDefault();
+            const type = document.getElementById('ch-type').value;
+            const number = document.getElementById('ch-number').value.trim();
+            const accountId = parseInt(document.getElementById('ch-account').value);
+            const accountName = document.getElementById('ch-account').options[document.getElementById('ch-account').selectedIndex]?.getAttribute('data-name');
+            const dueDate = document.getElementById('ch-due-date').value;
+            const amount = parseFloat(document.getElementById('ch-amount').value) || 0;
+            if (amount <= 0) return alert('أدخل مبلغا صحيحا.');
+            let cheques = getCheques();
+            const newCheque = { id: Date.now(), type, number, accountId, accountName, dueDate, amount, status: 'pending' };
+            cheques.push(newCheque);
+            saveCheques(cheques);
+            // توليد القيد المحاسبي الأولي
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            const today = new Date().toISOString().split('T')[0];
+            if (type === 'incoming') {
+                // شيك وارد: (مدين: شيكات برسم التحصيل 1106 / دائن: العملاء 1103)
+                entries.push({
+                    id: Date.now(), entryNumber, date: today,
+                    description: `استلام شيك رقم ${number} من العميل ${accountName}`,
+                    lines: [
+                        { accountCode: "1106", accountName: "شيكات برسم التحصيل", debit: amount, credit: 0 },
+                        { accountCode: "1103", accountName: "العملاء (الذمم المدينة)", debit: 0, credit: amount }
+                    ],
+                    totalDebit: amount, totalCredit: amount
+                });
+                // تحديث رصيد العميل (خصم)
+                updateCustomerBalance(accountId, -amount);
+            } else {
+                // شيك صادر: (مدين: الموردون 2101 / دائن: شيكات صادرة 2105)
+                entries.push({
+                    id: Date.now(), entryNumber, date: today,
+                    description: `إصدار شيك رقم ${number} للمورد ${accountName}`,
+                    lines: [
+                        { accountCode: "2101", accountName: "الموردون (الذمم الدائنة)", debit: amount, credit: 0 },
+                        { accountCode: "2105", accountName: "شيكات صادرة", debit: 0, credit: amount }
+                    ],
+                    totalDebit: amount, totalCredit: amount
+                });
+                // تحديث رصيد المورد (خصم)
+                updateSupplierBalance(accountId, -amount);
+            }
+            saveEntries(entries);
+            closeChequeModal();
+            renderCheques();
+            alert('تم تسجيل الشيك وتوليد القيد المحاسبي الأولي!');
+        }
+        function changeChequeStatus(id, newStatus) {
+            let cheques = getCheques();
+            const index = cheques.findIndex(c => c.id === id);
+            if (index === -1) return;
+            const ch = cheques[index];
+            if (ch.status !== 'pending') return alert('هذا الشيك تمت معالجته مسبقا.');
+            if (!confirm(`هل أنت متأكد من تغيير حالة الشيك رقم ${ch.number}`)) return;
+            // تحديث الحالة
+            cheques[index].status = newStatus;
+            saveCheques(cheques);
+            // توليد القيد المحاسبي الثاني (عند التحصيل أو الارتداد)
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            const today = new Date().toISOString().split('T')[0];
+            if (newStatus === 'cleared') {
+                if (ch.type === 'incoming') {
+                    // تحصيل شيك وارد: (مدين: البنك 1102 / دائن: شيكات برسم التحصيل 1106)
+                    entries.push({
+                        id: Date.now(), entryNumber, date: today,
+                        description: `تحصيل شيك رقم ${ch.number} من العميل ${ch.accountName}`,
+                        lines: [
+                            { accountCode: "1102", accountName: "البنك الأهلي", debit: ch.amount, credit: 0 },
+                            { accountCode: "1106", accountName: "شيكات برسم التحصيل", debit: 0, credit: ch.amount }
+                        ],
+                        totalDebit: ch.amount, totalCredit: ch.amount
+                    });
+                } else {
+                    // صرف شيك صادر: (مدين: شيكات صادرة 2105 / دائن: البنك 1102)
+                    entries.push({
+                        id: Date.now(), entryNumber, date: today,
+                        description: `صرف شيك رقم ${ch.number} للمورد ${ch.accountName}`,
+                        lines: [
+                            { accountCode: "2105", accountName: "شيكات صادرة", debit: ch.amount, credit: 0 },
+                            { accountCode: "1102", accountName: "البنك الأهلي", debit: 0, credit: ch.amount }
+                        ],
+                        totalDebit: ch.amount, totalCredit: ch.amount
+                    });
+                }
+            } else if (newStatus === 'bounced') {
+                // ارتداد شيك وارد: (مدين: العملاء 1103 / دائن: شيكات برسم التحصيل 1106)
+                if (ch.type === 'incoming') {
+                    entries.push({
+                        id: Date.now(), entryNumber, date: today,
+                        description: `ارتداد شيك رقم ${ch.number} من العميل ${ch.accountName}`,
+                        lines: [
+                            { accountCode: "1103", accountName: "العملاء (الذمم المدينة)", debit: ch.amount, credit: 0 },
+                            { accountCode: "1106", accountName: "شيكات برسم التحصيل", debit: 0, credit: ch.amount }
+                        ],
+                        totalDebit: ch.amount, totalCredit: ch.amount
+                    });
+                    // إعادة المبلغ لرصيد العميل
+                    updateCustomerBalance(ch.accountId, ch.amount);
+                } else {
+                    // ارتداد شيك صادر (نادرا ما يحدث لكنه يعني إعادة الدين للمورد)
+                    entries.push({
+                        id: Date.now(), entryNumber, date: today,
+                        description: `ارتداد شيك رقم ${ch.number} للمورد ${ch.accountName}`,
+                        lines: [
+                            { accountCode: "2105", accountName: "شيكات صادرة", debit: ch.amount, credit: 0 },
+                            { accountCode: "2101", accountName: "الموردون (الذمم الدائنة)", debit: 0, credit: ch.amount }
+                        ],
+                        totalDebit: ch.amount, totalCredit: ch.amount
+                    });
+                    updateSupplierBalance(ch.accountId, ch.amount);
+                }
+            }
+            saveEntries(entries);
+            renderCheques();
+            alert('تم تحديث حالة الشيك وتوليد القيد المحاسبي!');
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

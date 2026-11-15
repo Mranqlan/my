@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسويات المخزون (التالف والفاقد)</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>تسويات المخزون (التالف والفاقد)</h2>
+            </div>
+            <div class="entry-form-container" style="max-width: 800px; margin: 0 auto; margin-bottom: 30px;">
+                <div class="entry-top-row" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>الصنف التالف</label>
+                        <select id="adj-item" onchange="updateItemDetails()" required>
+                            <option value="">-- اختر الصنف --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>تاريخ التسوية</label>
+                        <input type="date" id="adj-date">
+                    </div>
+                </div>
+                <div class="entry-top-row" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 15px;">
+                    <div class="form-group">
+                        <label>الكمية المتوفرة حاليا</label>
+                        <input type="text" id="adj-current-qty" readonly style="background-color: #f8fafc; font-weight: bold; text-align: center;">
+                    </div>
+                    <div class="form-group">
+                        <label>الكمية التالفة</label>
+                        <input type="text" inputmode="decimal" id="adj-qty" value="1" onchange="calculateTotal()" style="text-align: center;">
+                    </div>
+                    <div class="form-group">
+                        <label>تكلفة التلف الإجمالية</label>
+                        <input type="text" id="adj-cost" readonly style="background-color: #fee2e2; color: #ef4444; font-weight: bold; text-align: center;">
+                    </div>
+                </div>
+                <div class="form-group full-width" style="margin-top: 15px;">
+                    <label>سبب التلف / ملاحظات</label>
+                    <input type="text" id="adj-reason" placeholder="مثال: كسر أثناء النقل انتهاء صلاحية...">
+                </div>
+                <button class="btn btn-danger" style="width: 100%; padding: 15px; font-size: 18px; margin-top: 20px; background-color: #ef4444;" onclick="saveAdjustment()">
+                    حفظ التسوية وتوليد القيد المحاسبي
+                </button>
+            </div>
+            <div class="table-container">
+                <h3 style="margin-bottom: 15px; color: var(--primary-color);">سجل تسويات المخزون</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الصنف</th>
+                            <th>الكمية التالفة</th>
+                            <th>تكلفة التلف</th>
+                            <th>السبب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adjustments-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('adj-date').valueAsDate = new Date();
+            loadItemsDropdown();
+            renderAdjustments();
+        });
+        function loadItemsDropdown() {
+            const select = document.getElementById('adj-item');
+            select.innerHTML = '<option value="">-- اختر الصنف --</option>';
+            getItems().forEach(item => {
+                if (item.qty > 0) {
+                    select.innerHTML += `<option value="${item.id}" data-price="${item.purchasePrice}" data-qty="${item.qty}" data-name="${item.name}">${item.code} - ${item.name} (متوفر: ${item.qty})</option>`;
+                }
+            });
+        }
+        function updateItemDetails() {
+            const select = document.getElementById('adj-item');
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption.value) {
+                document.getElementById('adj-current-qty').value = selectedOption.getAttribute('data-qty');
+                document.getElementById('adj-qty').max = selectedOption.getAttribute('data-qty');
+                document.getElementById('adj-qty').value = 1;
+            } else {
+                document.getElementById('adj-current-qty').value = '';
+                document.getElementById('adj-qty').value = 0;
+            }
+            calculateTotal();
+        }
+        function calculateTotal() {
+            const select = document.getElementById('adj-item');
+            const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption.value) {
+                document.getElementById('adj-cost').value = '0.00';
+                return;
+            }
+            const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+            const maxQty = parseFloat(selectedOption.getAttribute('data-qty')) || 0;
+            let qty = parseFloat(document.getElementById('adj-qty').value) || 0;
+            if (qty > maxQty) {
+                qty = maxQty;
+                document.getElementById('adj-qty').value = maxQty;
+                alert('الكمية التالفة لا يمكن أن تكون أكبر من الكمية المتوفرة!');
+            }
+            const totalCost = qty * price;
+            document.getElementById('adj-cost').value = totalCost.toFixed(2);
+        }
+        function saveAdjustment() {
+            const itemSelect = document.getElementById('adj-item');
+            const itemId = parseInt(itemSelect.value);
+            const itemName = itemSelect.options[itemSelect.selectedIndex]?.getAttribute('data-name');
+            const qty = parseFloat(document.getElementById('adj-qty').value) || 0;
+            const totalCost = parseFloat(document.getElementById('adj-cost').value) || 0;
+            const reason = document.getElementById('adj-reason').value.trim();
+            const date = document.getElementById('adj-date').value;
+            if (!itemId || qty <= 0) return alert('يرجى اختيار الصنف وإدخال كمية صحيحة.');
+            // 1. تحديث كمية الصنف في المخزون
+            let allItems = getItems();
+            let itemIndex = allItems.findIndex(i => i.id === itemId);
+            if (itemIndex !== -1) {
+                allItems[itemIndex].qty -= qty;
+                saveItems(allItems);
+            }
+            // 2. حفظ سجل التسوية
+            let adjustments = getInventoryAdjustments();
+            adjustments.push({
+                id: Date.now(),
+                date: date,
+                itemId: itemId,
+                itemName: itemName,
+                qty: qty,
+                totalCost: totalCost,
+                reason: reason
+            });
+            saveInventoryAdjustments(adjustments);
+            // 3. توليد القيد المحاسبي (مدين: مصروف تلف 5106 / دائن: المخزون 1104)
+            const entries = getEntries();
+            const entryNumber = `JV-${new Date().getFullYear()}-${String(entries.length + 1).padStart(4, '0')}`;
+            entries.push({
+                id: Date.now(),
+                entryNumber: entryNumber,
+                date: date,
+                description: `تسوية مخزون تالف - ${itemName} (السبب: ${reason || 'غير محدد'})`,
+                lines: [
+                    { accountCode: "5106", accountName: "مصروف تلف وفاقد المخزون", debit: totalCost, credit: 0 },
+                    { accountCode: "1104", accountName: "المخزون (البضاعة)", debit: 0, credit: totalCost }
+                ],
+                totalDebit: totalCost,
+                totalCredit: totalCost
+            });
+            saveEntries(entries);
+            alert(`تم حفظ التسوية وتوليد القيد المحاسبي بنجاح!\nرقم القيد: ${entryNumber}`);
+            // إعادة تحميل الصفحة لتحديث البيانات
+            window.location.reload();
+        }
+        function renderAdjustments() {
+            const tbody = document.getElementById('adjustments-body');
+            const adjustments = getInventoryAdjustments();
+            tbody.innerHTML = '';
+            if (adjustments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding: 20px;">لا توجد تسويات سابقة.</td></tr>';
+                return;
+            }
+            adjustments.reverse().forEach(adj => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${adj.date}</td>
+                        <td style="text-align: right; font-weight: bold;">${adj.itemName}</td>
+                        <td style="color: #ef4444; font-weight: bold;">${adj.qty}</td>
+                        <td style="font-family: monospace;">${parseFloat(adj.totalCost).toFixed(2)}</td>
+                        <td>${adj.reason || '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

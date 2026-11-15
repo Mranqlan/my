@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>كشف حساب عميل</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <style>
+        /* إعدادات الطباعة الاحترافية */
+        @media print {
+            /* إخفاء القوائم الجانبية والعلوية وأزرار الفلترة */
+            .sidebar, .top-header, .page-header, .filter-bar, .no-print {
+                display: none !important;
+            }
+            /* جعل المحتوى يأخذ كامل الصفحة */
+            body, .main-wrapper, .content-area {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: white !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            /* تنسيق الجدول ليكون بحدود سوداء واضحة */
+            .report-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .report-table th, .report-table td {
+                border: 1px solid #000 !important;
+                padding: 10px !important;
+                color: #000 !important;
+            }
+            .report-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+            }
+            .text-debit { color: #000 !important; font-weight: bold; }
+            .text-credit { color: #000 !important; font-weight: bold; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header no-print">
+            <div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div>
+        </header>
+        <section class="content-area">
+            <div class="page-header no-print">
+                <h2>كشف حساب عميل</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة الكشف</button>
+                </div>
+            </div>
+            <div class="filter-bar no-print" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; border: 1px solid var(--border-color);">
+                <label style="font-weight: 700;">اختر العميل:</label>
+                <select id="stmt-customer" onchange="generateStatement()" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; min-width: 250px;">
+                    <option value="">-- اختر العميل --</option>
+                </select>
+            </div>
+            <div id="print-area" class="report-container">
+                <div class="report-header" style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 20px;">
+                    <h1 style="color: #1e293b; margin: 0; font-size: 28px;"><span class="dynamic-company-name">شركة AL SHAMEL للمحاسبة</span></h1>
+                    <h3 style="color: #64748b; margin: 5px 0;">كشف حساب تفصيلي</h3>
+                    <p style="margin-top: 10px; font-weight: 700; font-size: 16px;">العميل: <span id="stmt-customer-name" style="color: #1e293b;">---</span></p>
+                </div>
+                <table class="report-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #f8fafc;">
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">التاريخ</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">نوع العملية</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">البيان / المرجع</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">مدين (عليه)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">دائن (له)</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1;">الرصيد</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stmt-body">
+                        <tr><td colspan="6" style="text-align: center; color: #64748b; padding: 30px;">يرجى اختيار عميل لعرض كشف الحساب.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('stmt-customer');
+            getCustomers().forEach(c => {
+                select.innerHTML += `<option value="${c.id}">${c.code} - ${c.name}</option>`;
+            });
+        });
+        function generateStatement() {
+            const customerId = parseInt(document.getElementById('stmt-customer').value);
+            const customerName = document.getElementById('stmt-customer').options[document.getElementById('stmt-customer').selectedIndex].text;
+            if (!customerId) return;
+            document.getElementById('stmt-customer-name').textContent = customerName;
+            let transactions = [];
+            // 1. فواتير المبيعات (مدين)
+            getInvoices().forEach(inv => {
+                if (inv.customerId === customerId) {
+                    transactions.push({ date: inv.date, type: 'فاتورة مبيعات', desc: `فاتورة رقم ${inv.invoiceNumber}`, debit: inv.total, credit: 0 });
+                }
+            });
+            // 2. مرتجعات المبيعات (دائن)
+            getSalesReturns().forEach(ret => {
+                const invoice = getInvoices().find(i => i.id === ret.invoiceId);
+                if (invoice && invoice.customerId === customerId) {
+                    transactions.push({ date: ret.date, type: 'مرتجع مبيعات', desc: `مرتجع رقم ${ret.returnNumber} (فاتورة ${invoice.invoiceNumber})`, debit: 0, credit: ret.total });
+                }
+            });
+            // 3. سندات القبض (دائن) - نبحث في القيود
+            const entries = getEntries();
+            entries.forEach(entry => {
+                if (entry.description && entry.description.includes(customerName.split(' - ')[1])) {
+                    entry.lines.forEach(line => {
+                        if (line.accountCode === '1103' && line.credit > 0) {
+                            transactions.push({ date: entry.date, type: 'سداد / قبض', desc: entry.description, debit: 0, credit: line.credit });
+                        }
+                    });
+                }
+            });
+            // ترتيب حسب التاريخ
+            transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const tbody = document.getElementById('stmt-body');
+            tbody.innerHTML = '';
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b; padding: 30px;">لا توجد حركات مسجلة على هذا العميل.</td></tr>';
+                return;
+            }
+            let runningBalance = 0;
+            transactions.forEach(t => {
+                runningBalance += (t.debit - t.credit);
+                let balanceClass = runningBalance > 0 ? 'text-debit' : (runningBalance < 0 ? 'text-credit' : '');
+                let balanceText = Math.abs(runningBalance).toFixed(2) + (runningBalance > 0 ? ' مدين' : (runningBalance < 0 ? ' دائن' : ''));
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${t.date}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${t.type}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${t.desc}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-family: monospace;" class="text-debit">${t.debit > 0 ? t.debit.toFixed(2) : '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-family: monospace;" class="text-credit">${t.credit > 0 ? t.credit.toFixed(2) : '-'}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-family: monospace; font-weight: bold;" class="${balanceClass}">${balanceText}</td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>

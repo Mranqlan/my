@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><title>قائمة الدخل</title>
+    <link rel="stylesheet" href="/assets/css/style.css?v=555555">
+    <link rel="stylesheet" href="/assets/css/components.css?v=555555">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-wrapper">
+        <header class="top-header"><div class="user-profile"><span>OMRAN AQLAN</span><div class="avatar"></div></div></header>
+        <section class="content-area">
+            <div class="page-header">
+                <h2>قائمة الدخل (Income Statement)</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+                    <button class="btn btn-primary" onclick="generateIncomeStatement()">تحديث 🔄</button>
+                </div>
+            </div>
+            <div class="filter-bar" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+                <label>من تاريخ:</label><input type="date" id="start-date" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <label>إلى تاريخ:</label><input type="date" id="end-date" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button class="btn btn-primary" onclick="generateIncomeStatement()">تصفية</button>
+            </div>
+            <div class="report-container">
+                <div class="report-header"><h1><span class="dynamic-company-name">شركة AL SHAMEL</span></h1><h3>قائمة الدخل</h3><p>للفترة: <span id="report-period"></span></p></div>
+                <table class="report-table">
+                    <tbody>
+                        <tr class="report-section-title"><td colspan="2">الإيرادات</td></tr>
+                        <tbody id="revenue-rows"></tbody>
+                        <tr class="report-total-row"><td>إجمالي الإيرادات</td><td id="total-revenue" class="text-credit">0.00</td></tr>
+                        <tr class="report-section-title"><td colspan="2">المصروفات</td></tr>
+                        <tbody id="expense-rows"></tbody>
+                        <tr class="report-total-row"><td>إجمالي المصروفات</td><td id="total-expense" class="text-debit">0.00</td></tr>
+                    </tbody>
+                    <tfoot><tr class="report-net-income" id="net-income-row"><td>صافي الربح (الخسارة)</td><td id="net-income-value">0.00</td></tr></tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { generateIncomeStatement(); });
+        function generateIncomeStatement() {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+            document.getElementById('report-period').textContent = (start || 'البداية') + ' إلى ' + (end || 'اليوم');
+            let entries = getEntries();
+            if(start) entries = entries.filter(e => e.date >= start);
+            if(end) entries = entries.filter(e => e.date <= end);
+            const accounts = getAccounts();
+            let revenues = [], expenses = [], totalRevenue = 0, totalExpense = 0;
+            accounts.forEach(acc => {
+                if (acc.type === 'إيرادات' || acc.type === 'مصروفات') {
+                    let balance = 0;
+                    entries.forEach(entry => { entry.lines.forEach(line => {
+                        if (line.accountCode === acc.code) {
+                            if (acc.type === 'إيرادات') balance += (line.credit - line.debit);
+                            else balance += (line.debit - line.credit);
+                        }
+                    }); });
+                    if (balance !== 0) {
+                        if (acc.type === 'إيرادات') { revenues.push({ name: acc.name, amount: balance }); totalRevenue += balance; }
+                        else { expenses.push({ name: acc.name, amount: balance }); totalExpense += balance; }
+                    }
+                }
+            });
+            const netIncome = totalRevenue - totalExpense;
+            const revBody = document.getElementById('revenue-rows');
+            revBody.innerHTML = revenues.length === 0 ? '<tr><td colspan="2" style="text-align:center;">لا توجد إيرادات</td></tr>' : '';
+            revenues.forEach(r => { revBody.innerHTML += `<tr><td class="indent-cell">${r.name}</td><td class="text-credit">${r.amount.toFixed(2)}</td></tr>`; });
+            document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+            const expBody = document.getElementById('expense-rows');
+            expBody.innerHTML = expenses.length === 0 ? '<tr><td colspan="2" style="text-align:center;">لا توجد مصروفات</td></tr>' : '';
+            expenses.forEach(e => { expBody.innerHTML += `<tr><td class="indent-cell">${e.name}</td><td class="text-debit">${e.amount.toFixed(2)}</td></tr>`; });
+            document.getElementById('total-expense').textContent = totalExpense.toFixed(2);
+            const netEl = document.getElementById('net-income-value');
+            netEl.textContent = Math.abs(netIncome).toFixed(2) + (netIncome >= 0 ? ' (ربح)' : ' (خسارة)');
+            netEl.className = netIncome >= 0 ? 'text-success' : 'text-danger';
+            document.getElementById('net-income-row').style.backgroundColor = netIncome >= 0 ? '#d1fae5' : '#fee2e2';
+        }
+    </script>
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+    <!-- ===== Core Scripts (Cleaned by System) ===== -->
+
+    <!-- ===== Core Scripts (Injected by Audit System) ===== -->
+    <script src="/assets/js/database.js?v=777777"></script>
+    <script src="/assets/js/layout.js?v=777777"></script>
+    <script src="/assets/js/app.js?v=777777"></script>
+    <script src="/assets/js/company-info.js?v=777777"></script>
+    <script src="/assets/js/permissions.js?v=777777"></script>
+    <script src="/assets/js/ai-assistant.js?v=777777"></script>
+    <script src="/assets/js/global-search.js?v=777777"></script>
+    <script src="/assets/js/export-dark.js?v=777777"></script>
+
+</body>
+</html>
