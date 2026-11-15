@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import os
 import json
@@ -7,7 +7,13 @@ try:
 except ImportError:
     from backend.models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice
 
-app = Flask(__name__)
+
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
+root_dir = os.path.abspath(os.path.join(basedir, '..'))
+
+app = Flask(__name__, static_folder=os.path.join(root_dir, 'assets'), template_folder=root_dir)
+
 app.json.ensure_ascii = False # إجبار اللغة العربية على الظهور بشكل صحيح
 CORS(app)
 
@@ -108,6 +114,15 @@ def add_purchase():
     i = PurchaseInvoice(invoice_number=data['invoiceNumber'], supplier_id=data.get('supplierId'), supplier_name=data.get('supplierName'), date=data.get('date'), total=data.get('total', 0), warehouse=data.get('warehouse', ''), branch_name=data.get('branchName', ''), items_json=json.dumps(data.get('items', []), ensure_ascii=False))
     db.session.add(i); db.session.commit()
     return jsonify({"id": i.id}), 201
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    if path != "" and os.path.exists(os.path.join(root_dir, path)):
+        return send_from_directory(root_dir, path)
+    else:
+        return send_from_directory(root_dir, 'login.html')
 
 if __name__ == '__main__':
     print("=" * 60)
