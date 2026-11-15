@@ -1,6 +1,5 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-import os
 import json
 try:
     from models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice
@@ -8,7 +7,6 @@ except ImportError:
     from backend.models import db, User, Customer, Supplier, Item, JournalEntry, SalesInvoice, PurchaseInvoice
 
 
-import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 root_dir = os.path.abspath(os.path.join(basedir, '..'))
 
