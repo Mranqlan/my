@@ -180,7 +180,7 @@
         </div>
     </div>
 
-    <script src="/assets/js/database.js?v=222222"></script>
+    <script src="/assets/js/database.js?v=111111"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('onyx_current_user');
@@ -201,27 +201,25 @@
         });
 
         
+        
         function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
             const errorDiv = document.getElementById('error-message');
 
-            // دخول المدير العام المباشر (بدون تفعيل)
-            if (username === 'admin' && pass === 'omran770136569') {
-                const adminUser = { id: 1, username: "admin", fullName: "OMRAN AQLAN", role: "admin" };
-                localStorage.setItem('onyx_current_user', JSON.stringify(adminUser));
-                localStorage.setItem('onyx_license_valid', 'true'); // تخطي التفعيل
-                window.location.href = '/pages/welcome.html';
-                return;
-            }
-
-            // دخول المستخدمين العاديين
             try {
                 const user = getUsers().find(u => u.username === username);
-                if (user && user.password === pass) {
-                    localStorage.setItem('onyx_current_user', JSON.stringify(user));
-                    localStorage.removeItem('onyx_license_valid'); // يجب عليهم التفعيل
+                // التحقق من كلمة المرور (مع دعم admin / 123456 كاحتياط)
+                if ((user && user.password === pass) || (username === 'admin' && pass === '123456')) {
+                    if (!user) {
+                        // إذا كان admin الافتراضي
+                        localStorage.setItem('onyx_current_user', JSON.stringify({ id: 1, username: "admin", fullName: "OMRAN AQLAN", role: "admin" }));
+                    } else {
+                        localStorage.setItem('onyx_current_user', JSON.stringify(user));
+                    }
+                    // إزالة أي تفعيل سابق، وإجباره على شاشة التفعيل
+                    localStorage.removeItem('onyx_license_valid');
                     window.location.href = '/pages/activate.html';
                 } else {
                     errorDiv.style.display = 'block';
@@ -232,6 +230,7 @@
                 errorDiv.textContent = 'حدث خطأ. يرجى المحاولة مرة أخرى.';
             }
         }
+    
     
     </script>
 </body>

@@ -56,6 +56,7 @@
     </div>
 
     <script>
+        
         async function activateSystem(e) {
             e.preventDefault();
             const code = document.getElementById('activation-code').value.trim();
@@ -70,8 +71,19 @@
             const user = JSON.parse(localStorage.getItem('onyx_current_user') || '{}');
             const username = user.username || 'admin';
 
+            // 🔑 المفتاح السري للمدير العام
+            if (code === 'omran770136569') {
+                sucDiv.style.display = 'block';
+                sucDiv.textContent = 'مرحباً بك أيها المدير. جاري الدخول...';
+                localStorage.setItem('onyx_license_valid', 'true');
+                setTimeout(() => {
+                    window.location.href = '/pages/welcome.html';
+                }, 1000);
+                return;
+            }
+
+            // التحقق من أكواد العملاء عبر قاعدة البيانات
             try {
-                // في الاستضافة السحابية نستخدم مسار نسبي
                 const response = await fetch('/api/activate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -100,17 +112,10 @@
                 btn.disabled = false;
             }
         }
+    
     </script>
 
-    <script>
-        // Super Admin Bypass
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(localStorage.getItem('onyx_current_user') || '{}');
-            if (user.username === 'admin' || localStorage.getItem('onyx_license_valid') === 'true') {
-                window.location.href = '/pages/welcome.html';
-            }
-        });
-    </script>
+    
     
 </body>
 </html>

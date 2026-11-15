@@ -1,4 +1,13 @@
 
+    // 🔒 فحص ترخيص النظام (License Guard)
+    const currentPath = window.location.pathname;
+    const isPublicPage = currentPath.includes('login.html') || currentPath.includes('activate.html');
+    
+    if (!isPublicPage && localStorage.getItem('onyx_license_valid') !== 'true') {
+        window.location.href = '/pages/activate.html';
+    }
+
+
 // إضافة شاشة تحميل عند فتح النظام
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('login.html')) return;
