@@ -56,64 +56,73 @@
     </div>
 
     <script>
+    async function activateSystem(e) {
+        e.preventDefault();
+        const code = document.getElementById('activation-code').value.trim();
+        const btn = document.getElementById('btn-activate');
+        const errDiv = document.getElementById('error-msg');
+        const sucDiv = document.getElementById('success-msg');
         
-        async function activateSystem(e) {
-            e.preventDefault();
-            const code = document.getElementById('activation-code').value.trim();
-            const btn = document.getElementById('btn-activate');
-            const errDiv = document.getElementById('error-msg');
-            const sucDiv = document.getElementById('success-msg');
-            
-            btn.textContent = 'جاري التحقق...';
-            btn.disabled = true;
-            errDiv.style.display = 'none';
-            
-            const user = JSON.parse(localStorage.getItem('onyx_current_user') || '{}');
-            const username = user.username || 'admin';
+        btn.textContent = 'جاري التحقق...';
+        btn.disabled = true;
+        errDiv.style.display = 'none';
+        sucDiv.style.display = 'none';
+        
+        const user = JSON.parse(localStorage.getItem('onyx_current_user') || '{}');
+        const username = user.username || 'admin';
 
-            // 🔑 المفتاح السري للمدير العام
-            if (code === 'omran770136569') {
-                sucDiv.style.display = 'block';
-                sucDiv.textContent = 'مرحباً بك أيها المدير. جاري الدخول...';
-                localStorage.setItem('onyx_license_valid', 'true');
-                    localStorage.setItem('onyx_tenant_id', data.tenant_id || 'default_company');
-                setTimeout(() => {
-                    window.location.href = '/pages/welcome.html';
-                }, 1000);
-                return;
-            }
+        // 1. المفتاح السري للمدير العام
+        if (code === 'omran770136569') {
+            sucDiv.style.display = 'block';
+            sucDiv.textContent = 'مرحباً بك أيها المدير. جاري الدخول...';
+            localStorage.setItem('onyx_license_valid', 'true');
+            localStorage.setItem('onyx_tenant_id', 'default_company');
+            
+            setTimeout(() => {
+                window.location.replace('/pages/welcome.html');
+            }, 800);
+            return;
+        }
 
-            // التحقق من أكواد العملاء عبر قاعدة البيانات
+        // 2. أكواد التفعيل العادية للعملاء
+        try {
+            const response = await fetch('/api/activate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, username: username })
+            });
+            
+            const text = await response.text();
+            let data;
             try {
-                const response = await fetch('/api/activate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code, username: username })
-                });
+                data = JSON.parse(text);
+            } catch (e) {
+                throw new Error("استجابة الخادم غير صالحة.");
+            }
+            
+            if (data.success) {
+                sucDiv.style.display = 'block';
+                sucDiv.textContent = data.message;
+                localStorage.setItem('onyx_license_valid', 'true');
+                localStorage.setItem('onyx_tenant_id', data.tenant_id || 'default_company');
                 
-                const data = await response.json();
-                
-                if (data.success) {
-                    sucDiv.style.display = 'block';
-                    sucDiv.textContent = data.message;
-                    localStorage.setItem('onyx_license_valid', 'true');
-                    localStorage.setItem('onyx_tenant_id', data.tenant_id || 'default_company');
+                setTimeout(() => {
                     window.location.replace('/pages/welcome.html');
-                } else {
-                    errDiv.style.display = 'block';
-                    errDiv.textContent = data.message;
-                    btn.textContent = 'تفعيل النظام الآن 🚀';
-                    btn.disabled = false;
-                }
-            } catch (error) {
+                }, 800);
+            } else {
                 errDiv.style.display = 'block';
-                errDiv.textContent = 'تعذر الاتصال بالخادم. يرجى المحاولة لاحقاً.';
+                errDiv.textContent = data.message;
                 btn.textContent = 'تفعيل النظام الآن 🚀';
                 btn.disabled = false;
             }
+        } catch (error) {
+            errDiv.style.display = 'block';
+            errDiv.textContent = 'حدث خطأ: ' + error.message;
+            btn.textContent = 'تفعيل النظام الآن 🚀';
+            btn.disabled = false;
         }
-    
-    </script>
+    }
+</script>
 
     
     
