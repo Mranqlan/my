@@ -32,7 +32,7 @@ async function syncSupplierToBackend(supplier) {
     try {
         const response = await fetch('/api/suppliers', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' },
             body: JSON.stringify({
                 code: supplier.code,
                 name: supplier.name,

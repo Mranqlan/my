@@ -3,7 +3,7 @@ async function syncCustomerToBackend(customer) {
     try {
         const response = await fetch('/api/customers', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' },
             body: JSON.stringify({
                 code: customer.code,
                 name: customer.name,

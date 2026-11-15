@@ -3,7 +3,7 @@ async function syncItemToBackend(item) {
     try {
         const response = await fetch('/api/items', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' },
             body: JSON.stringify({
                 code: item.code,
                 name: item.name,

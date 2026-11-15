@@ -201,7 +201,7 @@ async function getAIResponse(userMessage) {
         // استخدام واجهة Pollinations.ai - مجانية ولا تحتاج مفتاح API
         const response = await fetch('https://text.pollinations.ai/openai', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' },
             body: JSON.stringify({
                 model: 'openai',
                 messages: messages,

@@ -143,7 +143,7 @@ async function saveInvoice() {
         // إرسال للخادم
         console.log("🔄 [3] إرسال الفاتورة للخادم...");
         await fetch('/api/sales_invoices', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newInvoice)
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' }, body: JSON.stringify(newInvoice)
         });
         console.log("✅ [4] تم استلام رد الخادم (الفاتورة).");
 
@@ -162,7 +162,7 @@ async function saveInvoice() {
 
         console.log("🔄 [5] إرسال القيد للخادم...");
         await fetch('/api/entries', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry1)
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' }, body: JSON.stringify(entry1)
         });
         console.log("✅ [6] تم استلام رد الخادم (القيد).");
 
