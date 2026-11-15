@@ -83,7 +83,7 @@ async function sendAIMessage() {
         messages.innerHTML += `<div style="background: rgba(255,255,255,0.05); padding: 12px 15px; border-radius: 12px 12px 12px 0; color: #e2e8f0; font-size: 13px; line-height: 1.6; max-width: 85%; align-self: flex-start;">${data.reply}</div>`;
     } catch(e) {
         document.getElementById(typingId).remove();
-        messages.innerHTML += `<div style="background: rgba(239,68,68,0.1); color: #ef4444; padding: 12px 15px; border-radius: 12px 12px 12px 0; font-size: 13px; align-self: flex-start;">عذراً، الخادم يستغرق وقتاً طويلاً للرد. يرجى المحاولة مرة أخرى.</div>`;
+        messages.innerHTML += `<div style="background: rgba(239,68,68,0.1); color: #ef4444; padding: 12px 15px; border-radius: 12px 12px 12px 0; font-size: 13px; align-self: flex-start;">عذراً، واجهت مشكلة في الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى.</div>`;
     }
     messages.scrollTop = messages.scrollHeight;
 }

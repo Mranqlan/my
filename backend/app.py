@@ -199,25 +199,46 @@ def ai_chat():
     except Exception as e:
         system_context = "أنت مساعد ذكي لنظام تعز سوفت. تعذر جلب بيانات الشركة حالياً، أجب بشكل عام."
 
-    # الاتصال بـ Pollinations API
-    try:
-        payload = {
-            "model": "openai",
-            "messages": [
-                {"role": "system", "content": system_context},
-                {"role": "user", "content": user_message}
-            ],
-            "temperature": 0.7
-        }
-        response = requests.post('https://text.pollinations.ai/openai', json=payload, timeout=30)
-        
-        if response.status_code == 200:
-            bot_reply = response.json()['choices'][0]['message']['content']
-        else:
-            bot_reply = "عذراً، حدث خطأ في خادم الذكاء الاصطناعي. يرجى المحاولة لاحقاً."
-    except Exception as e:
-        bot_reply = f"تعذر الاتصال بخادم الذكاء الاصطناعي. تأكد من اتصالك بالإنترنت."
-        
+    # الاتصال بـ Pollinations API مع إعادة المحاولة
+    bot_reply = None
+    last_error = ""
+    
+    for attempt in range(3):  # محاولة 3 مرات كحد أقصى
+        try:
+            payload = {
+                "model": "openai",
+                "messages": [
+                    {"role": "system", "content": system_context},
+                    {"role": "user", "content": user_message}
+                ],
+                "temperature": 0.7
+            }
+            response = requests.post(
+                'https://text.pollinations.ai/openai', 
+                json=payload, 
+                timeout=90  # زيادة المهلة إلى 90 ثانية
+            )
+            
+            if response.status_code == 200:
+                bot_reply = response.json()['choices'][0]['message']['content']
+                break  # نجح، اخرج من الحلقة
+            elif response.status_code == 502:
+                last_error = "الخادم الخارجي مشغول (502). جاري إعادة المحاولة..."
+                continue  # أعد المحاولة
+            else:
+                last_error = f"خطأ من الخادم الخارجي (كود {response.status_code})."
+                break
+                
+        except requests.exceptions.Timeout:
+            last_error = "انتهت مهلة الاتصال بالخادم الخارجي. جاري إعادة المحاولة..."
+            continue
+        except Exception as e:
+            last_error = f"تعذر الاتصال بالخادم: {str(e)}"
+            break
+
+    if not bot_reply:
+        bot_reply = f"عذراً، واجهت مشكلة في الاتصال بالذكاء الاصطناعي. {last_error}"
+
     return jsonify({"reply": bot_reply})
 
 
