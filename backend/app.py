@@ -162,6 +162,65 @@ def add_purchase():
     db.session.commit()
     return jsonify({"id": i.id}), 201
 
+
+import requests
+
+@app.route('/api/chat', methods=['POST'])
+def ai_chat():
+    data = request.json
+    user_message = data.get('message', '')
+    tenant = request.headers.get('X-Tenant-ID', 'default_company')
+    
+    if not user_message:
+        return jsonify({"reply": "لم يتم إرسال أي سؤال."})
+
+    # بناء السياق (Context) من قاعدة البيانات
+    try:
+        customers = Customer.query.filter_by(tenant_id=tenant).all()
+        items = Item.query.filter_by(tenant_id=tenant).all()
+        invoices = SalesInvoice.query.filter_by(tenant_id=tenant).all()
+        
+        total_sales = sum(i.total for i in invoices) if invoices else 0
+        total_customers = len(customers)
+        low_stock_items = [f"{i.name} (متبقي {i.qty})" for i in items if i.qty <= 5]
+        total_debt = sum(c.balance for c in customers) if customers else 0
+        
+        low_stock_str = ", ".join(low_stock_items) if low_stock_items else "لا توجد أصناف منخفضة"
+        
+        system_context = f'''أنت مساعد ذكي لنظام "تعز سوفت" المحاسبي ERP. 
+تحدث باللغة العربية بأسلوب ودود ومهني ومختصر.
+إليك ملخص بيانات الشركة الحالية (التي يراها المستخدم الآن):
+- إجمالي المبيعات: {total_sales:,.2f} ريال
+- عدد العملاء: {total_customers}
+- إجمالي مديونية العملاء: {total_debt:,.2f} ريال
+- الأصناف منخفضة المخزون: {low_stock_str}
+
+إجابة المستخدم يجب أن تكون مبنية على هذه البيانات إن سأل عنها. لا تخترع أرقاماً غير موجودة.'''
+    except Exception as e:
+        system_context = "أنت مساعد ذكي لنظام تعز سوفت. تعذر جلب بيانات الشركة حالياً، أجب بشكل عام."
+
+    # الاتصال بـ Pollinations API
+    try:
+        payload = {
+            "model": "openai",
+            "messages": [
+                {"role": "system", "content": system_context},
+                {"role": "user", "content": user_message}
+            ],
+            "temperature": 0.7
+        }
+        response = requests.post('https://text.pollinations.ai/openai', json=payload, timeout=30)
+        
+        if response.status_code == 200:
+            bot_reply = response.json()['choices'][0]['message']['content']
+        else:
+            bot_reply = "عذراً، حدث خطأ في خادم الذكاء الاصطناعي. يرجى المحاولة لاحقاً."
+    except Exception as e:
+        bot_reply = f"تعذر الاتصال بخادم الذكاء الاصطناعي. تأكد من اتصالك بالإنترنت."
+        
+    return jsonify({"reply": bot_reply})
+
+
 # ==========================================
 # مسار تقديم الواجهة الأمامية (يجب أن يكون في آخر الملف)
 # ==========================================
