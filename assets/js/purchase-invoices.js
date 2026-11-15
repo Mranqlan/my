@@ -68,5 +68,5 @@ function calcTotal() {
 }
 
 async function saveInvoice() {
-    alert('تم الحفظ (تجريبي)');
+    Swal.fire({ icon: 'info', title: 'تم الحفظ (تجريبي)', confirmButtonColor: '#10b981' });
 }

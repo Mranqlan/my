@@ -1,4 +1,28 @@
 
+// إضافة شاشة تحميل عند فتح النظام
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('login.html')) return;
+    
+    const loader = document.createElement('div');
+    loader.id = 'global-loader';
+    loader.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f8fafc; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Noto Naskh Arabic', sans-serif;">
+            <div style="width: 60px; height: 60px; border: 5px solid #e2e8f0; border-top: 5px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <h2 style="margin-top: 20px; color: #0f172a; font-weight: bold; font-size: 20px;">جاري تحميل البيانات من السحابة...</h2>
+            <p style="color: #64748b; font-size: 14px; margin-top: 10px;">قد يستغرق هذا الأمر بضع ثوانٍ إذا كان الخادم في وضع النوم.</p>
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+        </div>
+    `;
+    document.body.appendChild(loader);
+
+    // إخفاء الشاشة بعد 3 ثوانٍ كحد أقصى (حتى لو تأخر الخادم)
+    setTimeout(() => {
+        const l = document.getElementById('global-loader');
+        if (l) l.style.display = 'none';
+    }, 4000);
+});
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     if (sidebarContainer) {

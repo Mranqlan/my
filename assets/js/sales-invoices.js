@@ -99,11 +99,11 @@ async function saveInvoice() {
     
     try {
         const t = calcTotal();
-        if (t.grand <= 0) return alert('أدخل أصنافا صحيحة.');
+        if (t.grand <= 0) return Swal.fire({ icon: 'info', title: 'أدخل أصنافا صحيحة.', confirmButtonColor: '#10b981' });
         
         const custSelect = document.getElementById('invoice-customer');
         const custIdStr = custSelect.value;
-        if (!custIdStr) return alert('يرجى اختيار العميل.');
+        if (!custIdStr) return Swal.fire({ icon: 'info', title: 'يرجى اختيار العميل.', confirmButtonColor: '#10b981' });
         const custName = custSelect.options[custSelect.selectedIndex].getAttribute('data-name');
         
         const branchName = document.getElementById('invoice-branch').options[document.getElementById('invoice-branch').selectedIndex]?.getAttribute('data-name') || '';

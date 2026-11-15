@@ -135,7 +135,7 @@ function saveItem(event) {
     syncItemToBackend(newItem);
     closeItemModal();
     renderItems();
-    alert('تم إضافة الصنف بنجاح!');
+    Swal.fire({ icon: 'info', title: 'تم إضافة الصنف بنجاح!', confirmButtonColor: '#10b981' });
 }
 
 function deleteItem(id) {
@@ -165,13 +165,13 @@ function generateMissingBarcodes() {
         renderItems(); // إعادة رسم الجدول
         alert(`✅ تم توليد باركود لـ ${count} صنف بنجاح!`);
     } else {
-        alert('جميع الأصناف تملك باركود بالفعل.');
+        Swal.fire({ icon: 'info', title: 'جميع الأصناف تملك باركود بالفعل.', confirmButtonColor: '#10b981' });
     }
 }
 
 function printBarcode(id) {
     const item = getItems().find(i => i.id == id);
-    if (!item || !item.barcode) return alert('هذا الصنف لا يملك باركود');
+    if (!item || !item.barcode) return Swal.fire({ icon: 'info', title: 'هذا الصنف لا يملك باركود', confirmButtonColor: '#10b981' });
     
     // تعبئة البيانات في النافذة
     document.getElementById('barcode-item-name').textContent = item.name;
@@ -192,7 +192,7 @@ function printBarcode(id) {
             });
         } catch(e) {
             console.error('Barcode Error:', e);
-            alert('حدث خطأ في توليد الباركود. تأكد من اتصالك بالإنترنت.');
+            Swal.fire({ icon: 'info', title: 'حدث خطأ في توليد الباركود. تأكد من اتصالك بالإنترنت.', confirmButtonColor: '#10b981' });
         }
     }, 100);
 }
