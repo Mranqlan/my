@@ -820,7 +820,7 @@ window.initBackendSync = async function() {
         console.log('🔄 [Sync] جاري جلب البيانات من الخادم...');
         
         // 1. العملاء
-        const custRes = await fetch('/api/customers');
+        const custRes = await fetch('/api/customers', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
         if (custRes.ok) {
             const customers = await custRes.json();
             localStorage.setItem('onyx_customers', JSON.stringify(customers.map(c => ({
@@ -831,7 +831,7 @@ window.initBackendSync = async function() {
         }
 
         // 2. الموردين
-        const supRes = await fetch('/api/suppliers');
+        const supRes = await fetch('/api/suppliers', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
         if (supRes.ok) {
             const suppliers = await supRes.json();
             localStorage.setItem('onyx_suppliers', JSON.stringify(suppliers.map(s => ({
@@ -841,7 +841,7 @@ window.initBackendSync = async function() {
         }
 
         // 3. الأصناف
-        const itemsRes = await fetch('/api/items');
+        const itemsRes = await fetch('/api/items', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
         if (itemsRes.ok) {
             const items = await itemsRes.json();
             localStorage.setItem('onyx_items', JSON.stringify(items.map(i => ({
@@ -853,7 +853,7 @@ window.initBackendSync = async function() {
         }
 
         // 4. القيود
-        const entriesRes = await fetch('/api/entries');
+        const entriesRes = await fetch('/api/entries', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
         if (entriesRes.ok) {
             const entries = await entriesRes.json();
             localStorage.setItem('onyx_entries', JSON.stringify(entries));
@@ -861,7 +861,7 @@ window.initBackendSync = async function() {
         }
 
         // 5. فواتير المبيعات
-        const invRes = await fetch('/api/sales_invoices');
+        const invRes = await fetch('/api/sales_invoices', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
         if (invRes.ok) {
             const invoices = await invRes.json();
             localStorage.setItem('onyx_invoices', JSON.stringify(invoices));
@@ -869,7 +869,7 @@ window.initBackendSync = async function() {
         }
 
         // 6. فواتير المشتريات
-        const purRes = await fetch('/api/purchase_invoices');
+        const purRes = await fetch('/api/purchase_invoices', { headers: { 'X-Tenant-ID': localStorage.getItem('onyx_tenant_id') || 'default_company' } });
         if (purRes.ok) {
             const purchases = await purRes.json();
             localStorage.setItem('onyx_purchases', JSON.stringify(purchases));
